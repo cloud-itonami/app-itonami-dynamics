@@ -17,7 +17,7 @@
         "expr": "0 6 * * *",
         "display": "0 6 * * *"
       },
-      "script": "cron-econ-audit.py",
+      "script": "cron-econ-audit.hy",
       "skill": null,
       "skills": [],
       "workdir": null
