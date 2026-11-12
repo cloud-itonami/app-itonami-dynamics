@@ -1,0 +1,16 @@
+{:archetype/id :grameen-group-lending-repayment
+ :archetype/classification :scenario-not-forecast
+ :archetype/interpretation "5人組連帯責任の小口融資。返済が次の融資原資になり、グループ圧力が延滞を抑える。実測と推定を分ける(下記)。"
+ :archetype/loop-shape {:stocks [:outstanding-loans :repayment-capacity]
+                        :reinforcing [:group-liability-pressure]
+                        :balancing [:repayment-collection]}
+ :archetype/measured
+ {:recovery-rate {:value 95.53 :unit :percent :as-of "2025-12"
+                  :source "grameenbank.org.bd Monthly Report in USD Dec'25, Rate of Recovery"}
+  :cumulative-repaid {:value 39098.48 :unit :usd-million :as-of "2025-12"
+                      :source "same report, Cumulative Amount Repaid Since Inception"}}
+ :archetype/estimated
+ {:borrowers {:value 9400000 :note "約940万人・97%女性は二次資料の値。一次の月次報告では未確認"
+              :source "graygroupintl.com 2026年記事(二次資料)"}}
+ :archetype/meadows {:band :band/B :label "rules / information-flow structure"
+                     :note "連帯責任という貸付規則そのものが介入点。扱いやすさは地域依存のため未評価"}}
