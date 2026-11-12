@@ -1,0 +1,27 @@
+{:model/id :singapore-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "在住人口Pと65歳以上Eの2ストック(単位:千人)。出生・死亡率は2024実測、高齢者増加は仮定。純移民は残差。65歳以上割合の母集団(在住/市民)の曖昧さは注記。"
+ :model/observed-evidence
+ {:p2024 {:value 4180.9 :unit :thousand :note "在住人口、2024年" :source "MOH/SingStat Population and Vital Statistics"}
+  :e2024 {:value 752.6 :unit :thousand :note "18.0%。母集団の定義は表記上曖昧のため仮定扱い" :source "same table"}
+  :resident-births2024 {:value 30.808 :unit :thousand :source "NPTD Population in Brief (30,808 resident births)"}
+  :deaths2024 {:value 26.442 :unit :thousand :note "総数。CDR 6.0と整合" :source "ICA Report on Registration"}
+  :tfr2024 {:value 0.97 :note "2025年0.87に低下。モデル入力には使わない" :source "SingStat Population Trends 2025"}
+  :cbr2024 {:value 7.4 :unit :per-thousand :source "same MOH table"}
+  :cdr2024 {:value 6.0 :unit :per-thousand :source "same MOH table"}
+  :net-migration {:value 18.0 :unit :thousand-per-year :note "在住人口増分との残差" :source "derived"}}
+ :common
+ {:p0 4180.9 :e0 752.6 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00737 :death-rate 0.006 :net-migration 18.0
+  :aging-coef 0.010 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生7.37‰・死亡6.0‰・純移入18千人/年)"}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.00663}
+  :faster-aging
+  {:label "高齢化加速 (係数0.014、感度)"
+   :aging-coef 0.014}}}
