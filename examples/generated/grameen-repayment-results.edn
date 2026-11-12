@@ -1,0 +1,19 @@
+#:model{:id :grameen-repayment-loop,
+        :as-of "2026-11-12",
+        :classification :scenario-not-forecast,
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Outstanding and cumulative repaid are Grameen-measured Dec-2025 values; "
+        "recovery rate is measured; turnover is calibrated to the Dec-2025 monthly "
+        "flow; annual disbursement is a sensitivity assumption. Year-1 checked "
+        "against the Aug-2026 outstanding figure.",
+        :oracle {:script "oracle/grameen_repayment_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/grameen-repayment-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline {:checkpoints {0 [1.42 39.098]}{1 [1.45 41.469]}{5 [1.456 51.062]}{10 [1.456 63.062]}}
+         :high-disburse {:checkpoints {0 [1.42 39.098]}{1 [1.848 41.87]}{5 [1.942 54.577]}{10 [1.942 70.577]}}
+         :stress-recovery {:checkpoints {0 [1.42 39.098]}{1 [1.521 41.398]}{5 [1.546 50.973]}{10 [1.546 62.973]}}
+         }}

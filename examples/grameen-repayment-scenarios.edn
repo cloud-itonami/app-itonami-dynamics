@@ -1,0 +1,23 @@
+{:model/id :grameen-repayment-loop
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "貸付残高Oと累計回収Rの2ストック。回収率eは実測、回転率tは2025年12月フローに較正、年間実行額Dは感度仮定。O* = D/(e*t) が観測の緩やかな残高増と整合。"
+ :model/observed-evidence
+ {:outstanding-2025 {:value 1.42 :unit :usd-billion :note "2025年12月" :source "Grameen Annual Report 2025"}
+  :repaid-2025 {:value 39.09848 :unit :usd-billion :note "2025年12月累計" :source "Grameen Monthly Report Dec'25"}
+  :recovery-rate {:value 95.53 :unit :percent :note "Rate of Recovery" :source "same"}
+  :monthly-flow {:value 0.195 :unit :usd-billion-per-month :note "2025年11→12月増加分。年率約2.34B" :source "same"}
+  :outstanding-2026-08 {:value 1.51288 :unit :usd-billion :source "grameenbank.org.bd intro 2026年8月"}}
+ :common
+ {:o0 1.42 :r0 39.09848 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :recovery-rate 0.9553 :turnover 1.725 :disbursement 2.4}
+ :scenarios
+ {:baseline
+  {:label "現状継続 (実行2.4B/年・回収率95.53%)"}
+  :high-disburse
+  {:label "実行拡大 (3.2B/年、感度)"
+   :disbursement 3.2}
+  :stress-recovery
+  {:label "回収悪化 (90%、感度)"
+   :recovery-rate 0.90}}}
