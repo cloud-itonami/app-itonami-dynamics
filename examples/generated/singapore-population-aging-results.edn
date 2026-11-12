@@ -1,0 +1,17 @@
+#:model{:id :singapore-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle, "
+        "units are thousands of people. Birth/death rates are SingStat/MOH-measured "
+        "2024 values; net migration is a residual; aging coefficient and elder-mortality "
+        "multiple are sensitivity assumptions. Year-1 checked against the 2025 estimate.",
+        :oracle {:script "oracle/singapore_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/singapore-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [4180.9 752.6]}{1 [4204.6 773.2]}{5 [4299.9 852.2]}{10 [4419.8 944.4]}}
+         :lower-fertility {:checkpoints {0 [4180.9 752.6]}{1 [4201.5 773.2]}{5 [4284.2 851.9]}{10 [4387.9 943.0]}}
+         :faster-aging {:checkpoints {0 [4180.9 752.6]}{1 [4204.6 786.7]}{5 [4299.9 915.8]}{10 [4419.8 1062.6]}}
+         }}
