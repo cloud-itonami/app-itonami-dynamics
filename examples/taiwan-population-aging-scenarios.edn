@@ -1,0 +1,25 @@
+{:model/id :taiwan-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡・高齢割合は内政部実測、純移民は残差、高齢化係数と高齢死亡倍率は感度仮定。"
+ :model/observed-evidence
+ {:p2024 {:value 23.40 :unit :million :note "2024年10月内政部(15-64歳69.22%から逆算)" :source "MOI Oct 2024"}
+  :e2024 {:value 4.45 :unit :million :note "19.03%。2025年12月に20.06%で超高齢社会突入" :source "same"}
+  :births2024 {:value 0.134856 :unit :million :source "台湾統計局"}
+  :deaths2024 {:value 0.202107 :unit :million :source "same"}
+  :tfr2024 {:value 0.885 :note "2025年は0.695まで低下(二次)。モデル入力には使わない" :source "NDC人口推計"}
+  :net-migration {:value -0.036 :unit :million-per-year :note "総変化-0.103Mと自然増減-0.067Mの残差" :source "derived"}}
+ :common
+ {:p0 23.40 :e0 4.45 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00576 :death-rate 0.00864 :net-migration -0.036
+  :aging-coef 0.015 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生5.76‰・死亡8.64‰・純流出3.6万人/年)"}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.00518}
+  :faster-aging
+  {:label "高齢化加速 (係数0.020、感度)"
+   :aging-coef 0.020}}}
