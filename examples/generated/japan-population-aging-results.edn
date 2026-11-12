@@ -1,0 +1,17 @@
+#:model{:id :japan-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death rates are MHLW-2024 final values; net migration is the measured "
+        "residual; aging coefficient and elder-mortality multiple are sensitivity "
+        "assumptions. Year-1 checked against 2025 estimates.",
+        :oracle {:script "oracle/japan_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/japan-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [123.802 36.253]}{1 [123.255 36.325]}{5 [121.106 36.489]}{10 [118.508 36.471]}}
+         :no-migration {:checkpoints {0 [123.802 36.253]}{1 [122.886 36.322]}{5 [119.289 36.419]}{10 [114.941 36.215]}}
+         :lower-fertility {:checkpoints {0 [123.802 36.253]}{1 [123.118 36.323]}{5 [120.441 36.463]}{10 [117.22 36.378]}}
+         }}
