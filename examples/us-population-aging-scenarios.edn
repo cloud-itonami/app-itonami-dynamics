@@ -1,0 +1,26 @@
+{:model/id :us-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡・純移民は2024実測、高齢者増加率はCensus実測。2025年推計との照合つき。"
+ :model/observed-evidence
+ {:p2024 {:value 340.1 :unit :million :note "2024年7月1日" :source "Census Vintage 2024"}
+  :e2024 {:value 61.2 :unit :million :note "18.0%、前年比+3.1%" :source "same"}
+  :births2024 {:value 3.628934 :unit :million :source "NCHS NVSS final 2024 (Data Brief 535)"}
+  :deaths2024 {:value 3.10 :unit :million :note "二次で一致(3.07〜3.10)。NCHS確定の直接確認は未" :source "複数二次資料の一致値"}
+  :net-migration {:value 2.73 :unit :million-per-year :note "2024年7月までの1年" :source "Census (censuseasy引用)"}
+  :migration-2025 {:value 1.26 :unit :million-per-year :note "2025年7月までの1年、半減" :source "same"}
+  :p2025 {:value 341.78 :unit :million :source "Census 2025年推計"}}
+ :common
+ {:p0 340.1 :e0 61.2 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.01067 :death-rate 0.00912 :net-migration 2.73
+  :elder-growth 0.031}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生10.67‰・死亡9.12‰・純移民273万人/年)"}
+  :low-migration
+  {:label "移民半減 (126万人/年、2025年水準、感度)"
+   :net-migration 1.26}
+  :faster-aging
+  {:label "高齢化加速 (増加率4%、感度)"
+   :elder-growth 0.04}}}

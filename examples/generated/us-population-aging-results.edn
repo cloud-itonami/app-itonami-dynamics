@@ -1,0 +1,17 @@
+#:model{:id :us-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth rate is NCHS-final 2024; death total is secondary-corroborated; net "
+        "migration and elderly growth are Census Vintage-2024 measured. Year-1 checked "
+        "against the 2025 estimate (tolerance reflects the 2025 migration drop).",
+        :oracle {:script "oracle/us_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/us-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [340.1 61.2]}{1 [343.36 63.125]}{5 [356.448 71.452]}{10 [372.924 83.422]}}
+         :low-migration {:checkpoints {0 [340.1 61.2]}{1 [341.888 63.125]}{5 [349.07 71.452]}{10 [358.11 83.422]}}
+         :faster-aging {:checkpoints {0 [340.1 61.2]}{1 [343.36 63.695]}{5 [356.448 74.735]}{10 [372.924 91.263]}}
+         }}
