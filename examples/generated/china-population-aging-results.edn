@@ -1,0 +1,18 @@
+#:model{:id :china-population-aging,
+        :as-of "2026-11-12",
+        :classification :scenario-not-forecast,
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death rates are NBS-measured 2024/2025 values; aging coefficient and "
+        "elder-mortality multiple are sensitivity assumptions. Year-1 checked against "
+        "NBS 2025 preliminary values.",
+        :oracle {:script "oracle/china_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/china-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [1408.28 220.23]}{1 [1406.886 223.369]}{5 [1401.326 234.924]}{10 [1394.406 247.327]}}
+         :low-fertility-2025-rates {:checkpoints {0 [1408.28 220.23]}{1 [1404.89 223.186]}{5 [1391.411 233.905]}{10 [1374.744 245.065]}}
+         :slower-aging {:checkpoints {0 [1408.28 220.23]}{1 [1404.89 219.092]}{5 [1391.411 214.729]}{10 [1374.744 209.663]}}
+         }}
