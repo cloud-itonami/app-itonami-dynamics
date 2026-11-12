@@ -24,19 +24,25 @@
    :dt 0.05 :years 10.0 :checkpoints [0 1 3 5 10]})
 
 (def scenario-order
-  ["centralized-low-accountability" "reform-mid"
-   "polycentric-high-accountability"])
+  ["centralized-low-accountability" "electoral-authoritarian"
+   "reform-mid" "polycentric-high-accountability" "democratic-full"])
 
 (def scenarios
   {"centralized-low-accountability"
    {:monopoly 0.90 :discretion 0.85 :accountability 0.15
     :shield 0.80 :norm 0.90}
+   "electoral-authoritarian"
+   {:monopoly 0.75 :discretion 0.70 :accountability 0.35
+    :shield 0.60 :norm 0.60}
    "reform-mid"
    {:monopoly 0.60 :discretion 0.60 :accountability 0.45
     :shield 0.50 :norm 0.40}
    "polycentric-high-accountability"
    {:monopoly 0.35 :discretion 0.40 :accountability 0.75
-    :shield 0.30 :norm 0.20}})
+    :shield 0.30 :norm 0.20}
+   "democratic-full"
+   {:monopoly 0.25 :discretion 0.35 :accountability 0.85
+    :shield 0.25 :norm 0.15}})
 
 (defn- abs [x] (if (neg? x) (- x) x))
 
@@ -105,7 +111,9 @@
   (let [c10 (into {} (map (fn [n] [n (first (get-in results [n 10]))])
                           scenario-order))]
     (when-not (> (get c10 "centralized-low-accountability")
+                 (get c10 "electoral-authoritarian")
                  (get c10 "reform-mid")
-                 (get c10 "polycentric-high-accountability"))
+                 (get c10 "polycentric-high-accountability")
+                 (get c10 "democratic-full"))
       (throw (ex-info "ordering invariant broken" {:c10 c10}))))
   (print (emit results)))
