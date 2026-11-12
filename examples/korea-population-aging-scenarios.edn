@@ -1,0 +1,26 @@
+{:model/id :korea-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡は2024実績、純移民は残差、高齢化係数と高齢死亡倍率は感度仮定。東アジア低出生の極端事例。"
+ :model/observed-evidence
+ {:p2024 {:value 51.22 :unit :million :note "2024年12月住民登録人口" :source "行政安全部"}
+  :e2024 {:value 10.24 :unit :million :note "20.0%。2024年7月に1000万人突破" :source "same"}
+  :births2024 {:value 0.238 :unit :million :note "9年ぶり前年比+3.6%" :source "統計庁"}
+  :deaths2024 {:value 0.358 :unit :million :source "same"}
+  :tfr2024 {:value 0.75 :note "世界最低。2025年概算0.8" :source "same"}
+  :net-migration {:value 0.09 :unit :million-per-year :note "UN総人口変化との残差、異基準のため参考" :source "derived"}
+  :e2025 {:value 10.85 :unit :million :note "2025年末、前年比+5.69%" :source "行政安全部(聯合ニュース引用)"}}
+ :common
+ {:p0 51.22 :e0 10.24 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00465 :death-rate 0.00699 :net-migration 0.09
+  :aging-coef 0.020 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生4.65‰・死亡6.99‰・純移入9万人/年)"}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.00418}
+  :faster-aging
+  {:label "高齢化加速 (係数0.025、感度)"
+   :aging-coef 0.025}}}
