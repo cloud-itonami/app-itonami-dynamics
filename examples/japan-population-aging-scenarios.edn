@@ -1,0 +1,25 @@
+{:model/id :japan-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡は2024確定数、純移民は残差実測、高齢化係数と高齢死亡倍率は感度仮定。2025年と照合。"
+ :model/observed-evidence
+ {:p2024 {:value 123.802 :unit :million :note "2024年10月1日推計" :source "総務省統計局 人口推計2024年10月報"}
+  :e2024 {:value 36.253 :unit :million :note "29.3%、同上" :source "same"}
+  :births2024 {:value 0.686173 :unit :million :source "厚労省 令和6年人口動態統計(確定数)"}
+  :deaths2024 {:value 1.605378 :unit :million :source "same"}
+  :net-migration {:value 0.37 :unit :million-per-year :note "総増減-0.55Mと自然増減-0.92Mの残差" :source "derived from the above"}
+  :e2025 {:value 36.26 :unit :million :note "2025年9月敬老の日推計、概数" :source "総務省統計局"}}
+ :common
+ {:p0 123.802 :e0 36.253 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.005543 :death-rate 0.012968 :net-migration 0.37
+  :aging-coef 0.017 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生5.54‰・死亡12.97‰・純移入37万人/年)"}
+  :no-migration
+  {:label "純移民ゼロ (感度)"
+   :net-migration 0.0}
+  :lower-fertility
+  {:label "出生2割減 (感度)"
+   :birth-rate 0.004434}}}
