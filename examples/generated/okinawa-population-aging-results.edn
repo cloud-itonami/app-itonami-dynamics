@@ -1,0 +1,16 @@
+#:model{:id :okinawa-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Natural/social/elder rates are 2024 measured values; the 23.8% elderly-share "
+        "level is secondary-sourced. Year-1 checked against the 2025 census.",
+        :oracle {:script "oracle/okinawa_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/okinawa-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [1469.6 349.8]}{1 [1467.837 355.44]}{5 [1460.809 378.922]}{10 [1452.07 410.468]}}
+         :no-inmigration {:checkpoints {0 [1469.6 349.8]}{1 [1466.224 355.44]}{5 [1452.795 378.922]}{10 [1436.183 410.468]}}
+         :slower-aging {:checkpoints {0 [1469.6 349.8]}{1 [1467.837 352.609]}{5 [1460.809 364.073]}{10 [1452.07 378.928]}}
+         }}
