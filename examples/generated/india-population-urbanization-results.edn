@@ -1,0 +1,17 @@
+#:model{:id :india-population-urbanization,
+        :as-of "2026-11-12",
+        :classification :scenario-not-forecast,
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death rates are SRS-2024 measured values; urbanization coefficient is "
+        "a sensitivity assumption. Year-1 checked against the cited 2025 range.",
+        :oracle {:script "oracle/india_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/india-population-urbanization-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-srs-2024 {:checkpoints {0 [1450.936 530.387]}{1 [1468.3 544.154]}{5 [1539.859 601.185]}{10 [1634.233 677.077]}}
+         :lower-fertility {:checkpoints {0 [1450.936 530.387]}{1 [1464.929 542.906]}{5 [1522.262 594.319]}{10 [1597.094 661.699]}}
+         :faster-urbanization {:checkpoints {0 [1450.936 530.387]}{1 [1468.3 547.843]}{5 [1539.859 619.771]}{10 [1634.233 714.604]}}
+         }}

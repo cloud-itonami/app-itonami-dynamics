@@ -1,0 +1,26 @@
+{:model/id :india-population-urbanization
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと都市人口Uの2ストック。出生・死亡はSRS 2024実測率。都市化係数は感度仮定。UN WPPのピーク予測(2060年代初頭・約17.0億)とは整合方向のみ見る。"
+ :model/observed-evidence
+ {:p2024 {:value 1450.936 :unit :million :source "Worldometer 2024 (UN WPP 2024準拠)"}
+  :urban2024 {:value 530.387 :unit :million :note "36.6%" :source "same"}
+  :cbr2024 {:value 18.3 :unit :per-thousand :source "SRS 2024"}
+  :cdr2024 {:value 6.4 :unit :per-thousand :source "SRS 2024"}
+  :tfr {:value 1.9 :source "UN WPP 2024"}
+  :working-age-share {:value 68 :unit :percent :note "2025年、2030年代に約69%でピーク" :source "UN WPP 2024"}
+  :peak {:value "約17.0億・2060年代初頭" :source "UN WPP 2024"}}
+ :common
+ {:p0 1450.936 :u0 530.387 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :urbanization-coef 0.008}
+ :scenarios
+ {:baseline-srs-2024
+  {:label "SRS 2024年率固定 (出生18.3‰・死亡6.4‰)"
+   :birth-rate 0.0183 :death-rate 0.0064}
+  :lower-fertility
+  {:label "低出生 (出生16.0‰、感度)"
+   :birth-rate 0.0160 :death-rate 0.0064}
+  :faster-urbanization
+  {:label "都市化加速 (係数0.012、感度)"
+   :birth-rate 0.0183 :death-rate 0.0064 :urbanization-coef 0.012}}}
