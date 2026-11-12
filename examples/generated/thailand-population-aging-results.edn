@@ -1,0 +1,18 @@
+#:model{:id :thailand-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts are DOPA-2024 registered actuals; the elderly level is "
+        "secondary-compiled; net migration is a zero assumption; aging coefficient and "
+        "elder-mortality multiple are sensitivity assumptions. Year-1 checked for "
+        "directional consistency only.",
+        :oracle {:script "oracle/thailand_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/thailand-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [65.95 7.94]}{1 [65.841 8.193]}{5 [65.405 9.115]}{10 [64.864 10.086]}}
+         :lower-fertility {:checkpoints {0 [65.95 7.94]}{1 [65.795 8.193]}{5 [65.176 9.111]}{10 [64.412 10.07]}}
+         :faster-aging {:checkpoints {0 [65.95 7.94]}{1 [65.841 8.42]}{5 [65.405 10.156]}{10 [64.864 11.959]}}
+         }}

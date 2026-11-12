@@ -1,0 +1,25 @@
+{:model/id :thailand-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡は2024登録実績、高齢者数は二次集計、純移民はゼロ仮定。タイの60歳以上20.69%とは定義が違う(65歳以上で統一)。"
+ :model/observed-evidence
+ {:p2024 {:value 65.95 :unit :million :note "2024年、10万人減" :source "DOPA登録人口(二次引用)"}
+  :births2024 {:value 0.46224 :unit :million :note "70年ぶり最低" :source "DOPA 2024"}
+  :deaths2024 {:value 0.571646 :unit :million :source "same"}
+  :tfr2024 {:value 1.0 :note "日本1.2を下回る。モデル入力には使わない" :source "same"}
+  :e2024 {:value 7.94 :unit :million :note "11.93%。60歳以上20.69%とは別" :source "Wikipedia編纂値(二次)。一次の直接確認は未"}
+  :e60-2024 {:value 20.69 :unit :percent :note "60歳以上。65歳以上と混同しない" :source "MSDHS"}}
+ :common
+ {:p0 65.95 :e0 7.94 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00701 :death-rate 0.00867 :net-migration 0.0
+  :aging-coef 0.008 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生7.01‰・死亡8.67‰・純移入ゼロ)"}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.00631}
+  :faster-aging
+  {:label "高齢化加速 (係数0.012、感度)"
+   :aging-coef 0.012}}
