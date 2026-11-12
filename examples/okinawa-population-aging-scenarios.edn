@@ -1,0 +1,24 @@
+{:model/id :okinawa-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。自然・社会増減率と高齢者増加率は2024年実測。観光・基地経済は背景として記録し、人数のみ置く。"
+ :model/observed-evidence
+ {:p2024 {:value 1469.6 :unit :thousand :note "2024年2月1日県推計人口" :source "沖縄県統計課 pop202402"}
+  :natural2024 {:value -0.23 :unit :percent-per-year :source "総務省人口推計2024年10月1日(二次引用)"}
+  :social2024 {:value 0.11 :unit :percent-per-year :source "same"}
+  :elder-growth2024 {:value 1.6 :unit :percent-per-year :note "65歳以上人口増減率、全国1位" :source "same"}
+  :e-share-2024 {:value 23.8 :unit :percent :note "二次引用のため水準は参考扱い" :source "same"}
+  :p2025 {:value 1466.548 :unit :thousand :note "2025年国勢調査確定値" :source "2020年1,467,480から932人減"}}
+ :common
+ {:p0 1469.6 :e0 349.8 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :natural-rate -0.0023 :social-rate 0.0011 :elder-growth 0.016}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (自然-0.23%・社会+0.11%・高齢+1.6%)"}
+  :no-inmigration
+  {:label "社会増ゼロ (自然減のみ、感度)"
+   :social-rate 0.0}
+  :slower-aging
+  {:label "高齢化半減 (増加率0.8%、感度)"
+   :elder-growth 0.008}}}
