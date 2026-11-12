@@ -51,7 +51,11 @@ Awaiの分離設計 (発行・運営・審査・開示の分離) は最初の介
 ## 再現
 
 ```
-python3 examples/corruption_oracle_run.py
+grep -e ':b1-onset 0.35' -e ':monopoly 0.90' -e ':accountability 0.75' \
+     -e ':c0 0.05' -e ':sim-years 10' \
+     examples/corruption-discretion-accountability-scenarios.edn
+basilisp run oracle/corruption_oracle_run.cljc \
+  > examples/generated/corruption-discretion-accountability-results.edn
 ```
 
 入力は `examples/corruption-discretion-accountability-scenarios.edn`、
