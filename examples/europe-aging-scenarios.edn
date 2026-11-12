@@ -1,0 +1,26 @@
+{:model/id :europe-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡はEurostat 2024実測。純移民と高齢化係数は感度仮定。2025年1月の65歳以上約99M・22%と照合。"
+ :model/observed-evidence
+ {:p2024 {:value 449.0 :unit :million :note "2024年1月1日" :source "Eurostat Demography of Europe 2025"}
+  :births2024 {:value 3.56 :unit :million :source "Eurostat/Iona Institute 2024"}
+  :deaths2024 {:value 4.81 :unit :million :source "Eurostat 2024"}
+  :cbr2024 {:value 7.9 :unit :per-thousand :source "Eurostat 2024"}
+  :cdr2024 {:value 10.7 :unit :per-thousand :source "Eurostat 2024"}
+  :e65-2024 {:value 96.98 :unit :million :note "21.6%" :source "Eurostat Population structure and ageing"}
+  :e65-2025 {:value 99.0 :unit :million :note "22%" :source "Eurostat Demography of Europe 2026"}}
+ :common
+ {:p0 449.0 :e0 96.98 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :aging-coef 0.014 :elder-death-multiple 3.0 :net-migration 1.5}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率+純移民150万人/年"
+   :birth-rate 0.0079 :death-rate 0.0107}
+  :no-migration
+  {:label "純移民ゼロ (自然減のみ、感度)"
+   :birth-rate 0.0079 :death-rate 0.0107 :net-migration 0.0}
+  :faster-aging
+  {:label "高齢化加速 (係数0.018、感度)"
+   :birth-rate 0.0079 :death-rate 0.0107 :aging-coef 0.018}}}

@@ -1,0 +1,18 @@
+#:model{:id :europe-aging,
+        :as-of "2026-11-12",
+        :classification :scenario-not-forecast,
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death rates are Eurostat-2024 measured values; net migration, aging "
+        "coefficient and elder-mortality multiple are sensitivity assumptions. Year-1 "
+        "checked against Eurostat January-2025 65+ figure.",
+        :oracle {:script "oracle/europe_aging_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/europe-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [449.0 96.98]}{1 [449.242 98.758]}{5 [450.206 105.133]}{10 [451.394 111.681]}}
+         :no-migration {:checkpoints {0 [449.0 96.98]}{1 [447.744 98.748]}{5 [442.757 104.893]}{10 [436.602 110.787]}}
+         :faster-aging {:checkpoints {0 [449.0 96.98]}{1 [449.242 100.13]}{5 [450.206 111.302]}{10 [451.394 122.542]}}
+         }}
