@@ -1,0 +1,17 @@
+#:model{:id :korea-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts are Statistics-Korea 2024 actuals; net migration is a "
+        "cross-source residual; aging coefficient and elder-mortality multiple are "
+        "sensitivity assumptions. Year-1 checked against the 2025 elderly figure.",
+        :oracle {:script "oracle/korea_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/korea-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [51.22 10.24]}{1 [51.19 10.833]}{5 [51.072 12.97]}{10 [50.925 15.181]}}
+         :lower-fertility {:checkpoints {0 [51.22 10.24]}{1 [51.166 10.833]}{5 [50.952 12.965]}{10 [50.688 15.16]}}
+         :faster-aging {:checkpoints {0 [51.22 10.24]}{1 [51.19 11.032]}{5 [51.072 13.852]}{10 [50.925 16.706]}}
+         }}
