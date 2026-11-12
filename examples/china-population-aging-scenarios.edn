@@ -1,0 +1,27 @@
+{:model/id :china-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡は2024/2025年NBS実測率。高齢化係数aと高齢死亡倍率は感度仮定。2025年実測との照合つき。"
+ :model/observed-evidence
+ {:p2024 {:value 1408.28 :unit :million :source "NBS 2024年統計公報(複数二次報道で一致)"}
+  :births2024 {:value 9.54 :unit :million :source "same"}
+  :deaths2024 {:value 10.93 :unit :million :source "same"}
+  :e65-2024 {:value 220.23 :unit :million :note "15.6%" :source "NBS 2024年(二次報道で一致)"}
+  :p2025 {:value 1405.0 :unit :million :source "NBS 2025年速報(ExecReview等)"}
+  :births2025 {:value 7.92 :unit :million :source "same"}
+  :deaths2025 {:value 11.31 :unit :million :source "same"}
+  :e65-2025 {:value 223.65 :unit :million :note "15.9%" :source "chinaorbit.com 2026年集計(NBS値として引用)"}}
+ :common
+ {:p0 1408.28 :e0 220.23 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :aging-coef 0.007 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生6.77‰・死亡7.76‰)"
+   :birth-rate 0.00677 :death-rate 0.00776}
+  :low-fertility-2025-rates
+  {:label "2025年率固定 (出生5.62‰・死亡8.03‰)"
+   :birth-rate 0.00562 :death-rate 0.00803}
+  :slower-aging
+  {:label "2025年率+高齢化半減 (感度)"
+   :birth-rate 0.00562 :death-rate 0.00803 :aging-coef 0.0035}}}
