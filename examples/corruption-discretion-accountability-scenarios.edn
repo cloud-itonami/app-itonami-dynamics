@@ -27,6 +27,10 @@
   {:label "集中・低説明責任 (計画経済・単一政党の近似)"
    :monopoly 0.90 :discretion 0.85 :accountability 0.15
    :shield 0.80 :norm 0.90}
+  :electoral-authoritarian
+  {:label "選挙権威主義 (競争なき選挙・部分監査)"
+   :monopoly 0.75 :discretion 0.70 :accountability 0.35
+   :shield 0.60 :norm 0.60}
   :reform-mid
   {:label "改革中間 (許認可緩和・監査強化の途中)"
    :monopoly 0.60 :discretion 0.60 :accountability 0.45
@@ -34,4 +38,8 @@
   :polycentric-high-accountability
   {:label "多中心・高説明責任 (分離と独立監査の近似)"
    :monopoly 0.35 :discretion 0.40 :accountability 0.75
-   :shield 0.30 :norm 0.20}}}
+   :shield 0.30 :norm 0.20}
+  :democratic-full
+  {:label "民主制・高説明責任 (自由報道・政権交代あり)"
+   :monopoly 0.25 :discretion 0.35 :accountability 0.85
+   :shield 0.25 :norm 0.15}}}
