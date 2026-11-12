@@ -1,0 +1,37 @@
+{:model/id :corruption-discretion-accountability
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "Klitgaard式(腐敗=独占+裁量-説明責任)を最小の2ストック(汚職C・隠蔽H)に落とした感度シナリオ。係数は測定値ではなく仮定。シナリオ間の順序と介入の向きだけを読む。予測や体制の断定ではない。"
+ :model/observed-evidence
+ {:klitgaard-formula
+  {:value "Corruption = Monopoly + Discretion - Accountability"
+   :source "Klitgaard (1988) Controlling Corruption — 理論式として引用、係数の実測ではない"}
+  :awai-design-reference
+  {:value "発行・運営・審査・開示の分離、権力集中と濫用リスクの公開"
+   :source "network-awai-apex/docs/polycentric-network-model.md, accountability-and-trust.md (2026-10-26)"}
+  :coefficients
+  {:value :unmeasured
+   :source "体制別の独占・裁量・説明責任の実測係数は本モデルに未投入。以下はすべて明示した感度仮定"}}
+ :common
+ {:c0 0.05
+  :h0 0.10
+  :b1-onset 0.35
+  :b2-clear 0.50
+  :a1-learn 0.60
+  :a2-break 0.70
+  :dt 0.05
+  :sim-years 10
+  :checkpoints-years [0 1 3 5 10]}
+ :scenarios
+ {:centralized-low-accountability
+  {:label "集中・低説明責任 (計画経済・単一政党の近似)"
+   :monopoly 0.90 :discretion 0.85 :accountability 0.15
+   :shield 0.80 :norm 0.90}
+  :reform-mid
+  {:label "改革中間 (許認可緩和・監査強化の途中)"
+   :monopoly 0.60 :discretion 0.60 :accountability 0.45
+   :shield 0.50 :norm 0.40}
+  :polycentric-high-accountability
+  {:label "多中心・高説明責任 (分離と独立監査の近似)"
+   :monopoly 0.35 :discretion 0.40 :accountability 0.75
+   :shield 0.30 :norm 0.20}}}
