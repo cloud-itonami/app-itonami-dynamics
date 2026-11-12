@@ -1,0 +1,17 @@
+#:model{:id :taiwan-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts and elderly share are MOI-measured 2024 values; net "
+        "migration is a residual; aging coefficient and elder-mortality multiple are "
+        "sensitivity assumptions. TFR is cited as context, not a model input.",
+        :oracle {:script "oracle/taiwan_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/taiwan-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [23.4 4.45]}{1 [23.297 4.615]}{5 [22.887 5.197]}{10 [22.381 5.77]}}
+         :lower-fertility {:checkpoints {0 [23.4 4.45]}{1 [23.283 4.615]}{5 [22.82 5.194]}{10 [22.25 5.762]}}
+         :faster-aging {:checkpoints {0 [23.4 4.45]}{1 [23.297 4.707]}{5 [22.887 5.605]}{10 [22.381 6.478]}}
+         }}
