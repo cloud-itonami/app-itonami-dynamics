@@ -1,0 +1,18 @@
+#:model{:id :spain-rent-burden,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Rent growth rates are Idealista/Fotocasa-2024 measured values (secondary press "
+        "citations); the 2024 burden level is Eurostat-measured; wage growth and the "
+        "coupling coefficient are sensitivity assumptions. The observed 2023-2024 burden "
+        "decline (employment/composition effects) is NOT modeled -- a named limitation.",
+        :oracle {:script "oracle/spain_rent_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/spain-rent-burden-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :idealista-pace {:checkpoints {0 [100.0 16.7]}{1 [112.15 17.381]}{5 [177.421 20.393]}{10 [314.781 24.904]}}
+         :fotocasa-pace {:checkpoints {0 [100.0 16.7]}{1 [114.971 17.599]}{5 [200.885 21.705]}{10 [403.547 28.211]}}
+         :cooling {:checkpoints {0 [100.0 16.7]}{1 [105.121 16.826]}{5 [128.362 17.338]}{10 [164.769 18.0]}}
+         }}
