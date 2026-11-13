@@ -1,0 +1,26 @@
+{:model/id :france-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡はINSEE 2024実績、総人口は2026年1月時点推計、純移民は残差、高齢化係数と高齢死亡倍率は感度仮定。戦後初の平時自然減。"
+ :model/observed-evidence
+ {:births2024 {:value 0.663 :unit :million :source "INSEE Demographic report 2024"}
+  :deaths2024 {:value 0.646 :unit :million :source "same"}
+  :natural2024 {:value 0.017 :unit :million :source "computed"}
+  :tfr2024 {:value 1.62 :note "2025年1.56まで低下。入力には使わない" :source "same"}
+  :p2026 {:value 69.1 :unit :million :note "2026年1月1日推計" :source "INSEE (rmx報道)"}
+  :e-share-2026 {:value 22.0 :unit :percent :note "2026年1月1日。2024年水準は近似" :source "same"}
+  :net-migration {:value 0.152 :unit :million-per-year :note "2024年純移入+152千人" :source "demographer集計"}}
+ :common
+ {:p0 68.93 :e0 14.93 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00962 :death-rate 0.00937 :net-migration 0.152
+  :aging-coef 0.014 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生9.62‰・死亡9.37‰・純移入15.2万人/年)"}
+  :low-migration
+  {:label "移民半減 (感度)"
+   :net-migration 0.076}
+  :faster-aging
+  {:label "高齢化加速 (係数0.018、感度)"
+   :aging-coef 0.018}}}

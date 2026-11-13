@@ -1,0 +1,17 @@
+#:model{:id :france-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts are INSEE-2024 actuals; total is the Jan-2026 estimate; "
+        "elderly share is secondary-compiled; net migration is a residual; aging "
+        "coefficient and elder-mortality multiple are sensitivity assumptions.",
+        :oracle {:script "oracle/france_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/france-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [68.93 14.93]}{1 [69.099 15.261]}{5 [69.777 16.475]}{10 [70.624 17.78]}}
+         :low-migration {:checkpoints {0 [68.93 14.93]}{1 [69.023 15.26]}{5 [69.396 16.463]}{10 [69.863 17.734]}}
+         :faster-aging {:checkpoints {0 [68.93 14.93]}{1 [69.099 15.472]}{5 [69.777 17.434]}{10 [70.624 19.49]}}
+         }}
