@@ -1,0 +1,18 @@
+#:model{:id :vietnam-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts are GSO 2024 mid-term census actuals; the elderly level is "
+        "secondary-compiled; net migration is a residual; aging coefficient and "
+        "elder-mortality multiple are sensitivity assumptions. Year-1 checked for "
+        "directional consistency only.",
+        :oracle {:script "oracle/thailand_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/vietnam-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [101.1 9.6]}{1 [101.741 9.985]}{5 [104.357 11.479]}{10 [107.745 13.251]}}
+         :lower-fertility {:checkpoints {0 [101.1 9.6]}{1 [101.609 9.985]}{5 [103.678 11.47]}{10 [106.343 13.213]}}
+         :faster-aging {:checkpoints {0 [101.1 9.6]}{1 [101.741 10.257]}{5 [104.357 12.777]}{10 [107.745 15.71]}}
+         }}

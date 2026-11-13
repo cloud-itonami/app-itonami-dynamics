@@ -1,0 +1,26 @@
+{:model/id :vietnam-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡率はGSO 2024中間国勢調査実測、65歳以上水準は二次値のため幅あり、純移民は残差、高齢化係数と高齢死亡倍率は感度仮定。若い東南アジアの対象。"
+ :model/observed-evidence
+ {:p2024 {:value 101.1 :unit :million :note "2024年4月1日中間国勢調査" :source "GSO"}
+  :cbr2024 {:value 13.5 :unit :per-thousand :source "same"}
+  :cdr2024 {:value 5.6 :unit :per-thousand :source "same"}
+  :tfr2024 {:value 1.91 :note "置換水準2.1を下回る。入力には使わない" :source "same"}
+  :e-share {:value 9.5 :unit :percent :note "2025年値。二次集計のため幅あり" :source "world-stats"}
+  :e2024 {:value 9.6 :unit :million :note "9.5%相当。幅±1.0で照合" :source "derived"}
+  :net-migration {:value -0.16 :unit :million-per-year :note "自然増+0.80Mと総増+0.64Mの残差" :source "derived"}}
+ :common
+ {:p0 101.1 :e0 9.6 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.0135 :death-rate 0.0056 :net-migration -0.16
+  :aging-coef 0.006 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生13.5‰・死亡5.6‰・純流出16万人/年)"}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.0122}
+  :faster-aging
+  {:label "高齢化加速 (係数0.009、感度)"
+   :aging-coef 0.009}}}
