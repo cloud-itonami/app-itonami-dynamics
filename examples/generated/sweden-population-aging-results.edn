@@ -1,0 +1,17 @@
+#:model{:id :sweden-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts and net migration are SCB-2024 actuals; elderly share is "
+        "secondary-compiled; aging coefficient and elder-mortality multiple are "
+        "sensitivity assumptions.",
+        :oracle {:script "oracle/sweden_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/sweden-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [10.588 2.18]}{1 [10.625 2.249]}{5 [10.773 2.502]}{10 [10.958 2.777]}}
+         :low-migration {:checkpoints {0 [10.588 2.18]}{1 [10.61 2.249]}{5 [10.698 2.5]}{10 [10.809 2.767]}}
+         :faster-aging {:checkpoints {0 [10.588 2.18]}{1 [10.625 2.282]}{5 [10.773 2.652]}{10 [10.958 3.044]}}
+         }}
