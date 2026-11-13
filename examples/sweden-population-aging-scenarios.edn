@@ -1,0 +1,27 @@
+{:model/id :sweden-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生98,500・死亡91,300・純移入29,700はSCB 2024実績、65歳以上水準は二次、純移民は実測残差、高齢化係数と高齢死亡倍率は感度仮定。"
+ :model/observed-evidence
+ {:p2024 {:value 10.5877 :unit :million :note "2024年末" :source "SCB Sweden's population 2024 – population changes"}
+  :births2024 {:value 0.0985 :unit :million :source "same"}
+  :deaths2024 {:value 0.0913 :unit :million :note "98,500-7,200。2025年92,000と整合" :source "SCB (derived)"}
+  :natural2024 {:value 0.0072 :unit :million :source "same"}
+  :tfr2024 {:value 1.43 :note "過去最低。入力には使わない" :source "same"}
+  :e-share {:value 20.6 :unit :percent :note "2024年。二次" :source "Wikipedia/ECOSIA集計"}
+  :e2024 {:value 2.18 :unit :million :note "20.6%相当。幅あり" :source "derived"}
+  :net-migration {:value 0.0297 :unit :million-per-year :source "same"}}
+ :common
+ {:p0 10.5877 :e0 2.18 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00930 :death-rate 0.00862 :net-migration 0.0297
+  :aging-coef 0.015 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生9.30‰・死亡8.62‰・純移入2.97万人/年)"}
+  :low-migration
+  {:label "移民半減 (感度)"
+   :net-migration 0.0149}
+  :faster-aging
+  {:label "高齢化加速 (係数0.019、感度)"
+   :aging-coef 0.019}}}
