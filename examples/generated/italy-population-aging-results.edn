@@ -1,0 +1,17 @@
+#:model{:id :italy-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts and total are ISTAT-2024 actuals; elderly share is "
+        "secondary-compiled; net migration is a residual; aging coefficient and "
+        "elder-mortality multiple are sensitivity assumptions.",
+        :oracle {:script "oracle/italy_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/italy-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [58.93 14.51]}{1 [58.893 14.734]}{5 [58.747 15.523]}{10 [58.568 16.302]}}
+         :low-migration {:checkpoints {0 [58.93 14.51]}{1 [58.771 14.733]}{5 [58.144 15.501]}{10 [57.376 16.22]}}
+         :faster-aging {:checkpoints {0 [58.93 14.51]}{1 [58.893 14.907]}{5 [58.747 16.292]}{10 [58.568 17.643]}}
+         }}
