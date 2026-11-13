@@ -1,0 +1,26 @@
+{:model/id :australia-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡・純移民はABS 2024年実績、65歳以上水準は二次、高齢化係数と高齢死亡倍率は感度仮定。高移民国の事例。"
+ :model/observed-evidence
+ {:p2024 {:value 27.3 :unit :million :note "2024年9月30日" :source "ABS"}
+  :births2024 {:value 0.292318 :unit :million :source "ABS/theworlddata"}
+  :deaths2024 {:value 0.187268 :unit :million :source "same"}
+  :natural2024 {:value 0.10505 :unit :million :source "computed"}
+  :tfr2024 {:value 1.481 :note "観測開始以来最低。入力には使わない" :source "same"}
+  :e2024 {:value 4.5 :unit :million :note "約16.5%。二次" :source "derived from 2025 composition"}
+  :net-migration2024 {:value 0.3408 :unit :million-per-year :note "12月年" :source "Centre for Population"}}
+ :common
+ {:p0 27.3 :e0 4.5 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.01071 :death-rate 0.00686 :net-migration 0.3408
+  :aging-coef 0.016 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生10.71‰・死亡6.86‰・純移入34.1万人/年)"}
+  :low-migration
+  {:label "移民半減 (感度)"
+   :net-migration 0.1704}
+  :faster-aging
+  {:label "高齢化加速 (係数0.020、感度)"
+   :aging-coef 0.02}}}

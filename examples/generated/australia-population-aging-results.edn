@@ -1,0 +1,17 @@
+#:model{:id :australia-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts and net migration are ABS-2024 actuals; elderly share is "
+        "secondary-compiled; aging coefficient and elder-mortality multiple are "
+        "sensitivity assumptions.",
+        :oracle {:script "oracle/australia_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/australia-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [27.3 4.5]}{1 [27.747 4.771]}{5 [29.551 5.829]}{10 [31.846 7.101]}}
+         :low-migration {:checkpoints {0 [27.3 4.5]}{1 [27.576 4.77]}{5 [28.691 5.797]}{10 [30.108 6.979]}}
+         :faster-aging {:checkpoints {0 [27.3 4.5]}{1 [27.747 4.861]}{5 [29.551 6.25]}{10 [31.846 7.884]}}
+         }}
