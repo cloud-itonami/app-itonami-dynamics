@@ -1,0 +1,25 @@
+{:model/id :canada-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生はStatCan 2024実績、死亡は2024年推計、純移民は2024年実績(724,586)、高齢化係数と高齢死亡倍率は感度仮定。高移民国の事例。"
+ :model/observed-evidence
+ {:p2024 {:value 41.529 :unit :million :note "2024年年末" :source "StatCan The Daily 2025-03-19"}
+  :births2024 {:value 0.365737 :unit :million :note "前年比+3.7%" :source "StatCan Vital Statistics"}
+  :deaths2024 {:value 0.340 :unit :million :note "推計(自然増は小)" :source "StatCan推計"}
+  :tfr2024 {:value 1.25 :note "低下中。入力には使わない" :source "StatCan"}
+  :e2025 {:value 8.14 :unit :million :note "19.5%。2025年7月1日" :source "fedogu集計(StatCan)"}
+  :net-migration2024 {:value 0.724586 :unit :million-per-year :note "全年成長の97.3%" :source "StatCan"}}
+ :common
+ {:p0 41.529 :e0 8.10 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00881 :death-rate 0.00819 :net-migration 0.724
+  :aging-coef 0.016 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生8.81‰・死亡8.19‰・純移入72.4万人/年)"}
+  :low-migration
+  {:label "移民半減 (感度)"
+   :net-migration 0.362}
+  :faster-aging
+  {:label "高齢化加速 (係数0.020、感度)"
+   :aging-coef 0.02}}}
