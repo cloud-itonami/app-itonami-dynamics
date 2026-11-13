@@ -1,0 +1,24 @@
+{:model/id :spain-rent-burden
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "家賃指数Rと負担率Bの2ストック。家賃上昇率はIdealista・Fotocasa 2024実績、負担率起点はEurostat実測、賃金上昇率と結合係数は感度仮定。2023-2024年に負担率が低下した事実(雇用・構成効果)は未モデル化と明記。"
+ :model/observed-evidence
+ {:rent-index2024 {:value 100.0 :note "2024年を基準 (=100)" :source "定義"}
+  :rent-growth-idealista {:value 11.5 :unit :percent-per-year :source "Idealista 2024 (El Pais引用の二次)"}
+  :rent-growth-fotocasa {:value 14.0 :unit :percent-per-year :source "Fotocasa 2024 (同社blogの二次)"}
+  :overburden2024 {:value 16.7 :unit :percent :source "Eurostat ilc_mded01 TOTAL/TOTAL 2024"}
+  :overburden-trend {:value [18.2 17.8 17.2 16.7] :unit :percent :note "2021-2024年、低下傾向" :source "same"}}
+ :common
+ {:r0 100.0 :b0 16.7 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :wage-growth 0.035 :coupling 0.5}
+ :scenarios
+ {:idealista-pace
+  {:label "Idealista並み (+11.5%/年)"
+   :rent-growth 0.115}
+  :fotocasa-pace
+  {:label "Fotocasa並み (+14%/年)"
+   :rent-growth 0.14}
+  :cooling
+  {:label "沈静化 (+5%/年、感度)"
+   :rent-growth 0.05}}}
