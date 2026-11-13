@@ -1,0 +1,26 @@
+{:model/id :italy-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡・総人口はISTAT 2024実績、65歳以上水準は二次集計(24.6%)、純移民は残差。EU最低の出生率の事例。"
+ :model/observed-evidence
+ {:p2024 {:value 58.93 :unit :million :note "2024年末" :source "ISTAT (Reuters/ELFAC引用)"}
+  :births2024 {:value 0.369944 :unit :million :note "1861年以来最低。16年連続減" :source "ISTAT"}
+  :deaths2024 {:value 0.650944 :unit :million :note "出生+死亡差-281千人から逆算" :source "derived from ELFAC引用"}
+  :tfr2024 {:value 1.18 :note "過去最低。2025年1.14に低下。入力には使わない" :source "ISTAT"}
+  :e-share2024 {:value 24.62 :unit :percent :note "World Bank系。EU最高水準" :source "ycharts"}
+  :e2024 {:value 14.51 :unit :million :note "24.62%相当。幅あり" :source "derived"}
+  :net-migration {:value 0.244 :unit :million-per-year :note "総増-0.037Mと自然増減-0.281Mの残差" :source "derived"}}
+ :common
+ {:p0 58.93 :e0 14.51 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00628 :death-rate 0.01105 :net-migration 0.244
+  :aging-coef 0.016 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生6.28‰・死亡11.05‰・純移入24.4万人/年)"}
+  :low-migration
+  {:label "移民半減 (感度)"
+   :net-migration 0.122}
+  :faster-aging
+  {:label "高齢化加速 (係数0.020、感度)"
+   :aging-coef 0.02}}}
