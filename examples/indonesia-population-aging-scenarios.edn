@@ -1,0 +1,25 @@
+{:model/id :indonesia-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡数は2024実績、65歳以上水準は複数二次値の範囲(7.3〜7.8%)、純移民はゼロ仮定、置換水準近傍の若い大型人口。"
+ :model/observed-evidence
+ {:p2024 {:value 284.97 :unit :million :note "2024年住民登録" :source "Dukcapil (Wikipedia引用)"}
+  :births2024 {:value 4.30 :unit :million :source "UN/WB/BPS (nosuffer集計)"}
+  :deaths2024 {:value 1.80 :unit :million :source "same"}
+  :e-share-range {:value [7.3 7.8] :unit :percent :note "Destatis 7.3 / Wikipedia 7.82 / WorldBank系 7.5" :source "複数二次値"}
+  :e2024 {:value 21.4 :unit :million :note "7.5%相当。幅あり" :source "derived"}
+  :tfr2024 {:value 2.12 :note "置換水準近傍。入力には使わない" :source "World Bank/placestats"}}
+ :common
+ {:p0 284.97 :e0 21.4 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.0151 :death-rate 0.0063 :net-migration 0.0
+  :aging-coef 0.006 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生15.1‰・死亡6.3‰・純移住ゼロ)"}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.0136}
+  :faster-aging
+  {:label "高齢化加速 (係数0.009、感度)"
+   :aging-coef 0.009}}}

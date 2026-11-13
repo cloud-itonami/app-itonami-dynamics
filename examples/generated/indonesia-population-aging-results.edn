@@ -1,0 +1,18 @@
+#:model{:id :indonesia-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts are 2024 actuals; the elderly level is a multi-source "
+        "range midpoint; net migration is a zero assumption; aging coefficient and "
+        "elder-mortality multiple are sensitivity assumptions. Year-1 checked for "
+        "directional consistency only.",
+        :oracle {:script "oracle/indonesia_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/indonesia-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [284.97 21.4]}{1 [287.488 22.57]}{5 [297.786 27.118]}{10 [311.178 32.536]}}
+         :lower-fertility {:checkpoints {0 [284.97 21.4]}{1 [287.058 22.569]}{5 [295.562 27.087]}{10 [306.547 32.412]}}
+         :faster-aging {:checkpoints {0 [284.97 21.4]}{1 [287.488 23.352]}{5 [297.786 30.86]}{10 [311.178 39.638]}}
+         }}
