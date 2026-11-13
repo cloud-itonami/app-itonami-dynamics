@@ -1,0 +1,17 @@
+#:model{:id :uk-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Rates are converted from the ONS 2024-based 10-year projection totals; "
+        "the elderly level is approximate; aging coefficient and elder-mortality "
+        "multiple are sensitivity assumptions. Year-1 checked against the ONS path.",
+        :oracle {:script "oracle/uk_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/uk-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-ons-projection {:checkpoints {0 [69.3 13.1]}{1 [69.475 13.546]}{5 [70.173 15.17]}{10 [71.044 16.884]}}
+         :low-migration {:checkpoints {0 [69.3 13.1]}{1 [69.365 13.546]}{5 [69.624 15.151]}{10 [69.947 16.813]}}
+         :faster-aging {:checkpoints {0 [69.3 13.1]}{1 [69.475 13.766]}{5 [70.173 16.157]}{10 [71.044 18.627]}}
+         }}
