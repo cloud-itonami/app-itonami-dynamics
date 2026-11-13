@@ -1,0 +1,26 @@
+{:model/id :germany-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡は2024 Destatis実績、総人口は Fortschreibung、高齢者数は二次集計、純移民は残差。自然減を移民が相殺する構造。"
+ :model/observed-evidence
+ {:p2024 {:value 83.58 :unit :million :note "2024年12月31日 Fortschreibung" :source "Destatis (bundesschnitt引用)"}
+  :births2024 {:value 0.677117 :unit :million :note "2013年以来最低" :source "Destatis"}
+  :deaths2024 {:value 1.007758 :unit :million :note "出生-死亡=-330,641と整合" :source "Destatis PR 017/2025 + nsz集計"}
+  :natural2024 {:value -0.330641 :unit :million :source "same"}
+  :e2024 {:value 19.0 :unit :million :note "約23%。1991年は15%" :source "rmx.news (Destatis引用の二次)"}
+  :tfr2024 {:value 1.35 :note "低下中。入力には使わない" :source "Destatis"}
+  :net-migration {:value 0.46 :unit :million-per-year :note "総増と自然増減の残差" :source "derived"}}
+ :common
+ {:p0 83.58 :e0 19.0 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00810 :death-rate 0.01206 :net-migration 0.46
+  :aging-coef 0.015 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生8.10‰・死亡12.06‰・純移入46万人/年)"}
+  :low-migration
+  {:label "移民半減 (23万人/年、感度)"
+   :net-migration 0.23}
+  :faster-aging
+  {:label "高齢化加速 (係数0.020、感度)"
+   :aging-coef 0.02}}}
