@@ -1,0 +1,26 @@
+{:model/id :uk-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡・純移民はONS 2024基盤の10年見通し(出生・死亡は実測転換)、高齢化係数は仮定。初の平時自然減。"
+ :model/observed-evidence
+ {:p2024 {:value 69.3 :unit :million :note "2024年半ば" :source "ONS NPP 2024-based"}
+  :births10y {:value 6.40 :unit :million :note "10年合計(2024-2034年)" :source "same"}
+  :deaths10y {:value 6.85 :unit :million :source "same"}
+  :natural10y {:value -0.45 :unit :million :source "same"}
+  :net-migration10y {:value 2.2 :unit :million :note "平均220千/年(新推計)" :source "same"}
+  :p2034 {:value 71.0 :unit :million :note "2034年半ば" :source "same"}
+  :e-share-2024 {:value 18.9 :unit :percent :note "ONS最新。二次" :source "ONS公表(概数)"}}
+ :common
+ {:p0 69.3 :e0 13.10 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00923 :death-rate 0.00988 :net-migration 0.22
+  :aging-coef 0.015 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-ons-projection
+  {:label "ONS 2024基盤 (出生6.4M・死亡6.85M・純移入2.2Mを10年で)"}
+  :low-migration
+  {:label "移民半減 (感度)"
+   :net-migration 0.11}
+  :faster-aging
+  {:label "高齢化加速 (係数0.019、感度)"
+   :aging-coef 0.019}}}
