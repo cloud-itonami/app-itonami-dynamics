@@ -1,0 +1,26 @@
+{:model/id :netherlands-population-aging
+ :model/as-of "2026-11-12"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。出生・死亡・総人口はCBS 2024実績、65歳以上水準は二次S、純移民は残差。EU高出生国(1.42)と低出生国の橋渡し。"
+ :model/observed-evidence
+ {:p2024 {:value 18.05 :unit :million :note "2024年末" :source "CBS News 2025/05"}
+  :births2024 {:value 0.165 :unit :million :source "same"}
+  :deaths2024 {:value 0.1715 :unit :million :source "database.earth集計(2024年171,524)"}
+  :natural2024 {:value -0.0065 :unit :million :source "computed"}
+  :tfr2024 {:value 1.43 :note "first estimate。2025年1.42" :source "CBS"}
+  :e2024 {:value 3.79 :unit :million :note "21%相当。2025年値は22%超え" :source "CBS forecast news + derived"}
+  :net-migration {:value 0.1095 :unit :million-per-year :note "総増103千と自然増減-6.5千の残差" :source "derived"}}
+ :common
+ {:p0 18.05 :e0 3.79 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.00914 :death-rate 0.0095 :net-migration 0.1095
+  :aging-coef 0.014 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2024-rates
+  {:label "2024年率固定 (出生9.14‰・死亡9.5‰・純移入10.95万人/年)"}
+  :low-migration
+  {:label "移民半減 (感度)"
+   :net-migration 0.0548}
+  :faster-aging
+  {:label "高齢化加速 (係数0.018、感度)"
+   :aging-coef 0.018}}}

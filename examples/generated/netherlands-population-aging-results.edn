@@ -1,0 +1,17 @@
+#:model{:id :netherlands-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts and total are CBS-2024 actuals; elderly share is "
+        "secondary-compiled; net migration is a residual; aging coefficient and "
+        "elder-mortality multiple are sensitivity assumptions.",
+        :oracle {:script "oracle/netherlands_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/netherlands-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [18.05 3.79]}{1 [18.153 3.88]}{5 [18.565 4.22]}{10 [19.078 4.6]}}
+         :low-migration {:checkpoints {0 [18.05 3.79]}{1 [18.098 3.88]}{5 [18.291 4.211]}{10 [18.532 4.566]}}
+         :faster-aging {:checkpoints {0 [18.05 3.79]}{1 [18.153 3.936]}{5 [18.565 4.475]}{10 [19.078 5.059]}}
+         }}
