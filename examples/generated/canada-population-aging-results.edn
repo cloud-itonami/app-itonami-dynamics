@@ -1,0 +1,17 @@
+#:model{:id :canada-population-aging,
+        :as-of "2026-11-12",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+        "Birth/death counts are StatCan-2024 actuals; net migration is the 2024 "
+        "measured value; aging coefficient and elder-mortality multiple are "
+        "sensitivity assumptions. Year-1 checked against the 2025 path.",
+        :oracle {:script "oracle/canada_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/canada-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2024-rates {:checkpoints {0 [41.529 8.1]}{1 [42.279 8.435]}{5 [45.283 9.76]}{10 [49.05 11.388]}}
+         :low-migration {:checkpoints {0 [41.529 8.1]}{1 [41.917 8.432]}{5 [43.471 9.693]}{10 [45.418 11.135]}}
+         :faster-aging {:checkpoints {0 [41.529 8.1]}{1 [42.279 8.567]}{5 [45.283 10.38]}{10 [49.05 12.541]}}
+         }}
