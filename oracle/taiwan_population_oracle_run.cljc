@@ -68,10 +68,10 @@
   (str "#:model{:id :taiwan-population-aging,\n"
        "        :as-of \"2026-11-12\",\n"
        "        :interpretation\n"
-       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. \"\n"
-       "        \"Birth/death counts and elderly share are MOI-measured 2024 values; net \"\n"
-       "        \"migration is a residual; aging coefficient and elder-mortality multiple are \"\n"
-       "        \"sensitivity assumptions. TFR is cited as context, not a model input.\",\n"
+       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+       "Birth/death counts and elderly share are MOI-measured 2024 values; net "
+       "migration is a residual; aging coefficient and elder-mortality multiple are "
+       "sensitivity assumptions. TFR is cited as context, not a model input.\",\n"
        "        :oracle {:script \"oracle/taiwan_population_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/taiwan-population-aging-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -80,14 +80,14 @@
        "        {\n"
        (apply str
               (map (fn [n]
-                     (str "         :" n " {:checkpoints "
+                     (str "         :" n " {:checkpoints {"
                           (apply str
                                  (map (fn [cp]
-                                        (str "{" cp " "
+                                        (str cp " "
                                              (fmt-point (get-in results [n cp]))
-                                             "}"))
+                                             " "))
                                       (:checkpoints common)))
-                          "}\n"))
+                          "}}\n"))
                    scenario-order))
        "         }}\n"))
 

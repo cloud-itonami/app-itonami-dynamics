@@ -68,10 +68,10 @@
   (str "#:model{:id :uk-population-aging,\n"
        "        :as-of \"2026-11-12\",\n"
        "        :interpretation\n"
-       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. \"\n"
-       "        \"Rates are converted from the ONS 2024-based 10-year projection totals; \"\n"
-       "        \"the elderly level is approximate; aging coefficient and elder-mortality \"\n"
-       "        \"multiple are sensitivity assumptions. Year-1 checked against the ONS path.\",\n"
+       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+       "Rates are converted from the ONS 2024-based 10-year projection totals; "
+       "the elderly level is approximate; aging coefficient and elder-mortality "
+       "multiple are sensitivity assumptions. Year-1 checked against the ONS path.\",\n"
        "        :oracle {:script \"oracle/uk_population_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/uk-population-aging-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -80,14 +80,14 @@
        "        {\n"
        (apply str
               (map (fn [n]
-                     (str "         :" n " {:checkpoints "
+                     (str "         :" n " {:checkpoints {"
                           (apply str
                                  (map (fn [cp]
-                                        (str "{" cp " "
+                                        (str cp " "
                                              (fmt-point (get-in results [n cp]))
-                                             "}"))
+                                             " "))
                                       (:checkpoints common)))
-                          "}\n"))
+                          "}}\n"))
                    scenario-order))
        "         }}\n"))
 

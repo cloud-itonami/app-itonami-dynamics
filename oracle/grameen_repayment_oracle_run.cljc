@@ -63,11 +63,11 @@
        "        :as-of \"2026-11-12\",\n"
        "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
-       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. \"\n"
-       "        \"Outstanding and cumulative repaid are Grameen-measured Dec-2025 values; \"\n"
-       "        \"recovery rate is measured; turnover is calibrated to the Dec-2025 monthly \"\n"
-       "        \"flow; annual disbursement is a sensitivity assumption. Year-1 checked \"\n"
-       "        \"against the Aug-2026 outstanding figure.\",\n"
+       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+       "Outstanding and cumulative repaid are Grameen-measured Dec-2025 values; "
+       "recovery rate is measured; turnover is calibrated to the Dec-2025 monthly "
+       "flow; annual disbursement is a sensitivity assumption. Year-1 checked "
+       "against the Aug-2026 outstanding figure.\",\n"
        "        :oracle {:script \"oracle/grameen_repayment_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/grameen-repayment-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -76,14 +76,14 @@
        "        {\n"
        (apply str
               (map (fn [n]
-                     (str "         :" n " {:checkpoints "
+                     (str "         :" n " {:checkpoints {"
                           (apply str
                                  (map (fn [cp]
-                                        (str "{" cp " "
+                                        (str cp " "
                                              (fmt-point (get-in results [n cp]))
-                                             "}"))
+                                             " "))
                                       (:checkpoints common)))
-                          "}\n"))
+                          "}}\n"))
                    scenario-order))
        "         }}\n"))
 

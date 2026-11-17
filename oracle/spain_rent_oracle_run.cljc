@@ -65,11 +65,11 @@
   (str "#:model{:id :spain-rent-burden,\n"
        "        :as-of \"2026-11-12\",\n"
        "        :interpretation\n"
-       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. \"\n"
-       "        \"Rent growth rates are Idealista/Fotocasa-2024 measured values (secondary press \"\n"
-       "        \"citations); the 2024 burden level is Eurostat-measured; wage growth and the \"\n"
-       "        \"coupling coefficient are sensitivity assumptions. The observed 2023-2024 burden \"\n"
-       "        \"decline (employment/composition effects) is NOT modeled -- a named limitation.\",\n"
+       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+       "Rent growth rates are Idealista/Fotocasa-2024 measured values (secondary press "
+       "citations); the 2024 burden level is Eurostat-measured; wage growth and the "
+       "coupling coefficient are sensitivity assumptions. The observed 2023-2024 burden "
+       "decline (employment/composition effects) is NOT modeled -- a named limitation.\",\n"
        "        :oracle {:script \"oracle/spain_rent_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/spain-rent-burden-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -78,14 +78,14 @@
        "        {\n"
        (apply str
               (map (fn [n]
-                     (str "         :" n " {:checkpoints "
+                     (str "         :" n " {:checkpoints {"
                           (apply str
                                  (map (fn [cp]
-                                        (str "{" cp " "
+                                        (str cp " "
                                              (fmt-point (get-in results [n cp]))
-                                             "}"))
+                                             " "))
                                       (:checkpoints common)))
-                          "}\n"))
+                          "}}\n"))
                    scenario-order))
        "         }}\n"))
 

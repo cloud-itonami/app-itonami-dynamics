@@ -66,10 +66,10 @@
   (str "#:model{:id :us-population-aging,\n"
        "        :as-of \"2026-11-12\",\n"
        "        :interpretation\n"
-       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. \"\n"
-       "        \"Birth rate is NCHS-final 2024; death total is secondary-corroborated; net \"\n"
-       "        \"migration and elderly growth are Census Vintage-2024 measured. Year-1 checked \"\n"
-       "        \"against the 2025 estimate (tolerance reflects the 2025 migration drop).\",\n"
+       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+       "Birth rate is NCHS-final 2024; death total is secondary-corroborated; net "
+       "migration and elderly growth are Census Vintage-2024 measured. Year-1 checked "
+       "against the 2025 estimate (tolerance reflects the 2025 migration drop).\",\n"
        "        :oracle {:script \"oracle/us_population_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/us-population-aging-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -78,14 +78,14 @@
        "        {\n"
        (apply str
               (map (fn [n]
-                     (str "         :" n " {:checkpoints "
+                     (str "         :" n " {:checkpoints {"
                           (apply str
                                  (map (fn [cp]
-                                        (str "{" cp " "
+                                        (str cp " "
                                              (fmt-point (get-in results [n cp]))
-                                             "}"))
+                                             " "))
                                       (:checkpoints common)))
-                          "}\n"))
+                          "}}\n"))
                    scenario-order))
        "         }}\n"))
 
