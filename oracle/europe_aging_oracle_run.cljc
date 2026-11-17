@@ -71,10 +71,10 @@
        "        :as-of \"2026-11-12\",\n"
        "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
-       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. \"\n"
-       "        \"Birth/death rates are Eurostat-2024 measured values; net migration, aging \"\n"
-       "        \"coefficient and elder-mortality multiple are sensitivity assumptions. Year-1 \"\n"
-       "        \"checked against Eurostat January-2025 65+ figure.\",\n"
+       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+       "Birth/death rates are Eurostat-2024 measured values; net migration, aging "
+       "coefficient and elder-mortality multiple are sensitivity assumptions. Year-1 "
+       "checked against Eurostat January-2025 65+ figure.\",\n"
        "        :oracle {:script \"oracle/europe_aging_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/europe-aging-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -83,14 +83,14 @@
        "        {\n"
        (apply str
               (map (fn [n]
-                     (str "         :" n " {:checkpoints "
+                     (str "         :" n " {:checkpoints {"
                           (apply str
                                  (map (fn [cp]
-                                        (str "{" cp " "
+                                        (str cp " "
                                              (fmt-point (get-in results [n cp]))
-                                             "}"))
+                                             " "))
                                       (:checkpoints common)))
-                          "}\n"))
+                          "}}\n"))
                    scenario-order))
        "         }}\n"))
 

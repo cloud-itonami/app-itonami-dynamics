@@ -68,10 +68,10 @@
   (str "#:model{:id :japan-population-aging,\n"
        "        :as-of \"2026-11-12\",\n"
        "        :interpretation\n"
-       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. \"\n"
-       "        \"Birth/death rates are MHLW-2024 final values; net migration is the measured \"\n"
-       "        \"residual; aging coefficient and elder-mortality multiple are sensitivity \"\n"
-       "        \"assumptions. Year-1 checked against 2025 estimates.\",\n"
+       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+       "Birth/death rates are MHLW-2024 final values; net migration is the measured "
+       "residual; aging coefficient and elder-mortality multiple are sensitivity "
+       "assumptions. Year-1 checked against 2025 estimates.\",\n"
        "        :oracle {:script \"oracle/japan_population_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/japan-population-aging-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -80,14 +80,14 @@
        "        {\n"
        (apply str
               (map (fn [n]
-                     (str "         :" n " {:checkpoints "
+                     (str "         :" n " {:checkpoints {"
                           (apply str
                                  (map (fn [cp]
-                                        (str "{" cp " "
+                                        (str cp " "
                                              (fmt-point (get-in results [n cp]))
-                                             "}"))
+                                             " "))
                                       (:checkpoints common)))
-                          "}\n"))
+                          "}}\n"))
                    scenario-order))
        "         }}\n"))
 

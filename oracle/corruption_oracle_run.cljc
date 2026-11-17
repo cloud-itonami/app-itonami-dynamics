@@ -77,9 +77,9 @@
        "        :as-of \"2026-11-12\",\n"
        "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
-       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. \"\n"
-       "        \"Coefficients are sensitivity assumptions, not measured rates. \"\n"
-       "        \"Read ordering and intervention direction only.\",\n"
+       "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
+       "Coefficients are sensitivity assumptions, not measured rates. "
+       "Read ordering and intervention direction only.\",\n"
        "        :oracle {:script \"oracle/corruption_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp 0.5.1, macOS arm64\",\n"
        "                 :source-edn \"examples/corruption-discretion-accountability-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -88,14 +88,14 @@
        "        {\n"
        (apply str
               (map (fn [n]
-                     (str "         :" n " {:checkpoints "
+                     (str "         :" n " {:checkpoints {"
                           (apply str
                                  (map (fn [cp]
-                                        (str "{" cp " "
+                                        (str cp " "
                                              (fmt-point (get-in results [n cp]))
-                                             "}"))
+                                             " "))
                                       (:checkpoints common)))
-                          "}\n"))
+                          "}}\n"))
                    scenario-order))
        "         }}\n"))
 
