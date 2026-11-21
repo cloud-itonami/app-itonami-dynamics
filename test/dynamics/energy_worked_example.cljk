@@ -1,0 +1,137 @@
+(ns dynamics.energy-worked-example
+  "Worked example for AWAI-3637 (draft for the owner): stocks and flows built
+   from real committed energy observations, and nil where nothing was measured.
+
+   The fixture (`examples/energy-observations.edn`) is a verbatim extract --
+   four countries, 17 datoms -- from the public energy projection
+   `kotoba-lang/app-itonami-global-energy-datoms`,
+   `data/datascript-tx.edn` at revision `e2bee4fb`. Every number below comes
+   from that fixture; nothing is estimated, defaulted or typical-valued.
+
+   Modelling choice (owner to confirm -- this is why the PR stays a draft):
+   each country's 2024 electricity mix is represented as two stocks, both in
+   TWh from the single Our World in Data datom for that country and year:
+   `:low-carbon-twh` (nuclear + hydropower + solar + wind + bioenergy +
+   other-renewables) and `:fossil-twh` (coal + gas + oil). The World Bank WDI
+   share-percent datoms (2021/2022) and the UN-SDG access datoms are carried
+   in the fixture as dated context and are NOT combined with the 2024 TWh
+   figures into a single claim -- different years, different bases.
+
+   What this example does NOT show: no trend (each source contributes a
+   single year, so no growth rate is computable), no forecast (nothing here
+   projects a future value), and no causal claim about any country (mixes
+   differ and no transition mechanism was measured). Where the library needs
+   a quantity the observations do not contain -- a loop's cycle time, a flow
+   rate over time -- the example leaves it absent and the result is nil."
+  (:require [dynamics.core :as d]
+            [kotoba.lang.edn :as edn]))
+
+(def fixture-path
+  "Path of the observations fixture, relative to the repository root."
+  "examples/energy-observations.edn")
+
+(defn read-fixture
+  "Read the fixture EDN. Takes the path so tests can point at the committed
+   file; defaults to `fixture-path`."
+  ([] (read-fixture fixture-path))
+  ([path] (edn/read-string (slurp path))))
+
+(defn- datoms-for
+  [observations iso3]
+  (filter #(= iso3 (:country/iso3 %)) observations))
+
+(defn owid-2024
+  "The single Our World in Data electricity datom for a country (2024, TWh by
+   source). One per country: the projection holds a single year per source."
+  [observations iso3]
+  (first (filter #(= (str "owid-electricity-2024-" iso3)
+                     (:energy.observation/id %))
+                 observations)))
+
+(def low-carbon-keys
+  "OWID keys summed into the low-carbon stock. Every one is present on each
+   of the fixture's four 2024 datoms (zeros are recorded as 0, not omitted)."
+  [:energy.electricity/nuclear-twh
+   :energy.electricity/hydropower-twh
+   :energy.electricity/solar-twh
+   :energy.electricity/wind-twh
+   :energy.electricity/bioenergy-twh
+   :energy.electricity/other-renewables-twh])
+
+(def fossil-keys
+  "OWID keys summed into the fossil stock."
+  [:energy.electricity/coal-twh
+   :energy.electricity/gas-twh
+   :energy.electricity/oil-twh])
+
+(defn twh-sums
+  "Split one OWID 2024 datom into low-carbon, fossil and total TWh. Pure
+   addition over observed values only."
+  [datom]
+  (let [low (apply + (map datom low-carbon-keys))
+        fos (apply + (map datom fossil-keys))]
+    {:low-carbon-twh low :fossil-twh fos :total-twh (+ low fos)}))
+
+(defn country-stocks
+  "Build the two 2024 electricity stocks for a country from the fixture.
+   Both values are computed sums of observed TWh; `:as-of` and `:source`
+   come straight from the datom, satisfying `d/stock`'s dated-source rule."
+  [observations iso3]
+  (let [datom (owid-2024 observations iso3)
+        {:keys [low-carbon-twh fossil-twh]} (twh-sums datom)
+        base {:as-of (:energy/year datom)
+              :source (str "Our World in Data electricity-prod-source-stacked"
+                           " (" (:energy.observation/release datom) ")"
+                           " via app-itonami-global-energy-datoms"
+                           " data/datascript-tx.edn@e2bee4fb"
+                           " " (:energy.observation/id datom))
+              :unit :twh}]
+    {:low-carbon (d/stock (assoc base :id (keyword (str "electricity-low-carbon-" iso3))
+                                      :label (str "Low-carbon electricity generation, " iso3 ", 2024")
+                                      :value (double low-carbon-twh)))
+     :fossil (d/stock (assoc base :id (keyword (str "electricity-fossil-" iso3))
+                                    :label (str "Fossil electricity generation, " iso3 ", 2024")
+                                    :value (double fossil-twh)))}))
+
+(defn country-flow
+  "The displacement flow between the two stocks. It names `:from` and `:to`
+   and carries no `:rate-estimate`: a rate over time is unobserved because
+   each source contributes a single year, so none is supplied -- not zero,
+   not an average, not a typical value."
+  [observations iso3]
+  (d/flow {:id (keyword (str "fossil-to-low-carbon-shift-" iso3))
+           :label (str "Fossil-to-low-carbon shift, " iso3)
+           :from (keyword (str "electricity-fossil-" iso3))
+           :to (keyword (str "electricity-low-carbon-" iso3))
+           :unit :twh-per-year}))
+
+(defn country-loop
+  "The reinforcing loop for a country's electricity transition. `:stocks`
+   and `:flows` are the observed/built ones above; `:cycle-time-days` is
+   deliberately absent -- no cycle was ever observed, so
+   `d/loop-structural-strength` must return nil rather than a fabricated
+   speed."
+  [observations iso3]
+  (let [{:keys [low-carbon fossil]} (country-stocks observations iso3)]
+    (d/loop* {:id (keyword (str "electricity-transition-" iso3))
+              :kind :reinforcing
+              :stocks [low-carbon fossil]
+              :flows [(country-flow observations iso3)]})))
+
+(defn country-strength
+  "Structural strength of a country's transition loop. Always nil on the
+   committed observations: the missing input is `:cycle-time-days`, which no
+   datom in the fixture contains."
+  [observations iso3]
+  (d/loop-structural-strength (country-loop observations iso3)))
+
+(defn generation-cagr-since-prior-year
+  "Year-on-year growth of total electricity generation into 2024. Always nil
+   on the committed observations: the missing input is the prior-year
+   endpoint -- the projection holds 2024 alone for this source, so there is
+   no second snapshot to form a ratio from. This is why the example shows no
+   trend."
+  [observations iso3]
+  (let [prior-twh nil ;; no 2023 (or any other year) TWh datom exists in the projection for this source
+        total (:total-twh (twh-sums (owid-2024 observations iso3)))]
+    (d/cagr prior-twh total 1)))

@@ -1,6 +1,7 @@
 (ns dynamics.core-test
   (:require [kotoba.test :refer [deftest is testing]]
-            [dynamics.core :as d]))
+            [dynamics.core :as d]
+            [dynamics.energy-worked-example :as energy-example]))
 
 (deftest meadows-bands-ordering-test
   (testing "higher bands carry strictly higher weight (Meadows' claim: upper points dominate)"
@@ -513,3 +514,70 @@
       (is (= (count all) (count (set all))) "partitions must not overlap")
       (is (= (set (keys d/loop-archetypes)) (set all))
           "partitions must cover the whole catalog -- any archetype missing here is one the 2D view silently drops"))))
+
+;; ---------------------------------------------------------------------------
+;; AWAI-3637: worked example on committed energy observations (draft for the
+;; owner). Stocks and flows are built from the fixture's observed TWh only;
+;; wherever the library needs an unobserved quantity the result is nil.
+;; ---------------------------------------------------------------------------
+
+(deftest energy-fixture-provenance-test
+  (testing "the fixture records where its datoms came from and stays small"
+    (let [fix (energy-example/read-fixture)
+          src (:fixture/source fix)]
+      (is (= "kotoba-lang/app-itonami-global-energy-datoms" (:repository src)))
+      (is (= "e2bee4fb" (:revision src)))
+      (is (= "data/datascript-tx.edn" (:file src)))
+      (is (= "7d3d76f7e0fc5eec43120ba286913545900e11bb5b9732b36d82b12919f38bf9"
+             (:sha256 src))
+          "the recorded sha256 of the public file at the recorded revision")
+      (is (<= (count (:fixture/countries fix)) 5) "at most five countries")
+      (is (= (set (:fixture/countries fix)) #{"JPN" "KEN" "DEU" "CHN"}))
+      (is (every? #(contains? #{"JPN" "KEN" "DEU" "CHN"} (:country/iso3 %))
+                  (:observations fix))
+          "every datom belongs to one of the four countries"))))
+
+(deftest energy-stocks-are-computed-from-present-inputs-test
+  (testing "each country's 2024 stocks are the observed TWh sums, dated and sourced"
+    (let [fix (energy-example/read-fixture)
+          obs (:observations fix)
+          close? (fn [a b] (< (Math/abs (- a b)) 1e-9))]
+      ;; Hand-added from the fixture's owid-electricity-2024 datoms, e.g. JPN
+      ;; low-carbon = 84.91 + 79.45 + 96.7 + 11.54 + 45.42 + 0 = 318.02.
+      (doseq [[iso low fossil] [["JPN" 318.02 698.37]
+                                ["KEN" 12.13 1.13]
+                                ["DEU" 290.86 205.13]
+                                ["CHN" 3849.68 6237.2]]]
+        ;; NB: the doseq numbers stay `low`/`fossil`; the built stocks bind as
+        ;; `low-stock`/`fossil-stock` -- same-name shadowing here once hid the
+        ;; expected number behind the stock map (AWAI-2811's lesson, repeated).
+        (let [{low-stock :low-carbon fossil-stock :fossil} (energy-example/country-stocks obs iso)]
+          (is (close? low (:value low-stock)) (str iso " low-carbon TWh"))
+          (is (close? fossil (:value fossil-stock)) (str iso " fossil TWh"))
+          (is (= 2024 (:as-of low-stock)) (str iso " stock is as-of the observed year"))
+          (is (string? (:source low-stock)) (str iso " stock carries its source"))))
+      (testing "the flow between the stocks names its ends and carries no rate"
+        (let [flow (energy-example/country-flow obs "JPN")]
+          (is (= :electricity-fossil-JPN (:from flow)))
+          (is (= :electricity-low-carbon-JPN (:to flow)))
+          (is (not (contains? flow :rate-estimate))
+              "a flow rate over time is unobserved -- a single year per source gives no rate"))))))
+
+(deftest energy-unmeasured-quantities-are-nil-test
+  (testing "a country's transition loop has no strength: the missing input is
+            :cycle-time-days -- the projection holds a single year per source,
+            so no transition cycle was ever observed"
+    (let [fix (energy-example/read-fixture)
+          obs (:observations fix)]
+      (doseq [iso ["JPN" "KEN" "DEU" "CHN"]]
+        (is (nil? (energy-example/country-strength obs iso))
+            (str iso ": no observed cycle time, so nil -- never a fabricated speed")))))
+  (testing "generation growth into 2024 is nil too: the missing input is the
+            prior-year endpoint -- with one snapshot per source there is no
+            second year to form a ratio from, which is why this example shows
+            no trend"
+    (let [fix (energy-example/read-fixture)
+          obs (:observations fix)]
+      (doseq [iso ["JPN" "KEN" "DEU" "CHN"]]
+        (is (nil? (energy-example/generation-cagr-since-prior-year obs iso))
+            (str iso ": no prior-year TWh observed, so nil -- never 0"))))))
