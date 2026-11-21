@@ -4,8 +4,8 @@
 
    The fixture (`examples/energy-observations.edn`) is a verbatim extract --
    four countries, 17 datoms -- from the public energy projection
-   `kotoba-lang/app-itonami-global-energy-datoms`,
-   `data/datascript-tx.edn` at revision `e2bee4fb`. Every number below comes
+   `cloud-itonami/app-itonami-global-energy-datoms` (formerly under
+   `kotoba-lang`), `data/datascript-tx.edn` at revision `e2bee4fb`. Every number below comes
    from that fixture; nothing is estimated, defaulted or typical-valued.
 
    Modelling choice (owner to confirm -- this is why the PR stays a draft):
@@ -22,7 +22,15 @@
    projects a future value), and no causal claim about any country (mixes
    differ and no transition mechanism was measured). Where the library needs
    a quantity the observations do not contain -- a loop's cycle time, a flow
-   rate over time -- the example leaves it absent and the result is nil."
+   rate over time -- the example leaves it absent and the result is nil.
+
+   Scope of `a single year per source`: that is true of
+   `data/datascript-tx.edn` at `e2bee4fb`, the file this fixture pins. Later
+   revisions of the projection add separate, additive time-series files
+   (`data/series/worldbank-wdi-2000-2023.datascript-tx.edn`, AWAI-3646;
+   `data/series/owid-electricity-1920-2025.datascript-tx.edn`, AWAI-3657).
+   A fixture drawn from those could supply a prior-year endpoint; this one
+   deliberately does not."
   (:require [dynamics.core :as d]
             [kotoba.lang.edn :as edn]))
 

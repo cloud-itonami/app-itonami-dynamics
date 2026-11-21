@@ -525,7 +525,7 @@
   (testing "the fixture records where its datoms came from and stays small"
     (let [fix (energy-example/read-fixture)
           src (:fixture/source fix)]
-      (is (= "kotoba-lang/app-itonami-global-energy-datoms" (:repository src)))
+      (is (= "cloud-itonami/app-itonami-global-energy-datoms" (:repository src)))
       (is (= "e2bee4fb" (:revision src)))
       (is (= "data/datascript-tx.edn" (:file src)))
       (is (= "7d3d76f7e0fc5eec43120ba286913545900e11bb5b9732b36d82b12919f38bf9"

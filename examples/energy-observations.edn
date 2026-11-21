@@ -2,7 +2,9 @@
 ;; A small verbatim extract -- four countries, 17 datoms -- from the public
 ;; energy projection. Nothing here was retyped: each datom below is copied
 ;; byte-for-byte from the recorded file at the recorded revision.
-;; Source repository: kotoba-lang/app-itonami-global-energy-datoms (public)
+;; Source repository: cloud-itonami/app-itonami-global-energy-datoms (public)
+;; (moved from kotoba-lang/app-itonami-global-energy-datoms; GitHub redirects
+;; the old name)
 ;; Revision: e2bee4fb
 ;; File: data/datascript-tx.edn
 ;; File sha256: 7d3d76f7e0fc5eec43120ba286913545900e11bb5b9732b36d82b12919f38bf9
@@ -10,7 +12,7 @@
 ;; both routes giving the same digest. Do not copy the whole projection here.
 {:fixture/id :energy-observations-four-countries
  :fixture/description "Committed energy observations for Japan, Kenya, Germany and China."
- :fixture/source {:repository "kotoba-lang/app-itonami-global-energy-datoms"
+ :fixture/source {:repository "cloud-itonami/app-itonami-global-energy-datoms"
                   :revision "e2bee4fb"
                   :file "data/datascript-tx.edn"
                   :sha256 "7d3d76f7e0fc5eec43120ba286913545900e11bb5b9732b36d82b12919f38bf9"}
