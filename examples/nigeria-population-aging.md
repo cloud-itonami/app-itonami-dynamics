@@ -146,7 +146,7 @@ basilisp と babashka で小数第3位まで一致を確認。
 
 ## PR
 
-<!-- PR-URL-TO-BE-FILLED-AFTER-CREATION -->
+PR: https://github.com/cloud-itonami/app-itonami-dynamics/pull/38
 
 PR作成まで。マージしない。checksが落ちた場合は自分のPRが報告できる範囲で
 修正し、報告時に状態を書く。
