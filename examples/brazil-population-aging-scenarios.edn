@@ -1,0 +1,47 @@
+{:model/id :brazil-population-aging
+ :model/as-of "2026-11-22"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。起点はCenso Demográfico 2022 (Segunda Apuração, 2022-08-01基準) の実測。出生・死亡率はEstatísticas do Registro Civil 2022 (発生年ベース)。純移民はIBGE Projeções Revisão 2024のSTIベース saldo (2022)。高齢化係数は2010→2022の両国勢調査の変化から中点法で導出した実測。60歳以上 (老人保健福祉) とは定義が違う (65歳以上で統一)。"
+ :model/observed-evidence
+ {:p2022-census {:value 203.080756 :unit :million :note "203 080 756人。基準夜 2022-07-31→08-01, Segunda Apuração" :source "IBGE Censo 2022 (SECOM republicação)"}
+  :age-0-14 {:value 40.129261 :unit :million :note "40 129 261人 (bairros XLSX Total行 0-4+5-9+10-14)" :source "IBGE geoftp tabelas_complementares"}
+  :age-15-64 {:value 140.782394 :unit :million :note "総数から差し引いた残り (コードで検算)" :source "computed-residual"}
+  :e2022 {:value 22.169101 :unit :million :note "22 169 101人、総人口の10.9%" :source "IBGE Censo 2022 (SECOM republicação)"}
+  :share-65plus-2022 {:value 10.916 :unit :percent :note "22.169101で計算。公表10.9% (四捨五入)" :source "computed"}
+  :rdi65-2022 {:value 15.747 :unit :per-100 :note "老年従属人口指数 = 65+/15-64 ×100" :source "computed"}
+  :aging-index-2022 {:value 55.244 :unit :per-100 :note "高齢化指数 = 65+/0-14 ×100。公表55.2 (四捨五入)" :source "computed"}
+  :births2022 {:value 2.542298 :unit :million :note "発生年2022・登録済 (登録総数2 621 015のうち)" :source "IBGE Registro Civil 2022"}
+  :deaths2022 {:value 1.504763 :unit :million :note "発生年2022 (2021は1 786 347、コロナ減衰後)" :source "same"}
+  :net-migration-2022 {:value -0.252799 :unit :million-per-year :note "-(131 477+121 322)。出入国記録 (STI) による2022年 saldo" :source "IBGE Projeções Revisão 2024 の方法論書 Tabela 4"}
+  :p2010-census {:value 190.755799 :unit :million :note "190 755 799人 (2010-08-01基準)" :source "IBGE Sinopse do Censo 2010"}
+  :e2010 {:value 14.081477 :unit :million :note "14 081 477人、7.4%" :source "IBGE Censo 2022 (SECOM republicação)"}
+  :e60plus-2022 {:value 32.11349 :unit :million :note "60歳以上。65歳以上と混同しない (公表15.6%)" :source "IBGE Censo 2022 (60歳以上冊)"}
+  :sinasc-2024 {:value 2.389307 :unit :million :note "SINASC通知総数。Registro Civil発生2 376 901との突合用" :source "IBGE Sub-registro 2024"}
+  :sim-2024 {:value 1.531936 :unit :million :note "SIM通知総数。Registro Civil発生1 495 386との突合用" :source "same"}}
+ :model/source-pins
+ [{:name "IBGE Censo 2022 segunda apuração republicada pela SECOM (gov.br)" :url "https://www.gov.br/secom/pt-br/acompanhe-a-secom/noticias/2023/10/censo-2022-numero-de-idosos-na-populacao-do-pais-cresceu-57-4-em-12-anos" :version "27/10/2023 (atualizado 01/11/2023)" :fetched "2026-11-22T22:15:00Z" :sha256 "3d622a28ebe3d6df09b47ec0e4643e90e23d8e979963091b0b7369345aafac11" :used-for "総人口 203 080 756、65+ 22 169 101 (2022) と14 081 477 (2010)"}
+  {:name "IBGE Censo 2022 População por idade e sexo — Resultados do universo (Brasil)" :url "https://biblioteca.ibge.gov.br/visualizacao/periodicos/3102/cd_2022_populacao_idade_sexo_br.pdf" :version "Rio de Janeiro 2023" :fetched "2026-11-22T22:15:30Z" :sha256 "0cb95da463719a138870e0dd3bf7529ab76c5e57bb874c2e4a96a1b73679252f" :used-for "総人口・割合表 (19.8/69.3/10.9)・高齢化指数55.2の照合"}
+  {:name "IBGE Censo 2022 tabelas complementares: População residente por bairros, sexo e idade (xlsx)" :url "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_de_setores_censitarios__divisoes_intramunicipais/censo_2022/tabelas_complementares/Populacao_residente_por_bairros_sexo_idade.xlsx" :version "2024-11-14 (Last-Modified)" :fetched "2026-11-22T22:17:00Z" :sha256 "5c040ab5bd0f2d7d2ac788660f458e3bb71738acf49669f619b4d5af36e7905c" :used-for "Total行: 総人口 203 080 756、0-14 = 40 129 261、60+ = 32 113 490 (絶対数の確定)"}
+  {:name "IBGE Censo 2022: População por idade e sexo — Pessoas de 60 anos ou mais (liv102038)" :url "https://biblioteca.ibge.gov.br/visualizacao/livros/liv102038.pdf" :version "IBGE 2023" :fetched "2026-11-22T22:16:00Z" :sha256 "6a3b1fccac2bc12ac570a599333890cb5ad94b1fdc5bc812e84fbbe6a5d283d1" :used-for "60+ 32 113 490 (15.6%) の照合"}
+  {:name "IBGE Sinopse do Censo Demográfico 2010 (liv49230)" :url "https://biblioteca.ibge.gov.br/visualizacao/livros/liv49230.pdf" :version "IBGE 2011" :fetched "2026-11-22T22:17:30Z" :sha256 "65512e36bdcf4596234e8deac0cdcc6c15947db232ef497e11fb74731f47c4b3" :used-for "2010年総人口 190 755 799"}
+  {:name "IBGE Estatísticas do Registro Civil 2022 — informativo (v49)" :url "https://biblioteca.ibge.gov.br/visualizacao/periodicos/135/rc_2022_v49_informativo.pdf" :version "2024年刊行 (2022年分)" :fetched "2026-11-22T22:16:40Z" :sha256 "541b8c6d6d6cb8e3ed683f31864a9faa171248ddd4b13e94142b8f59dc932f52" :used-for "出生2 542 298、死亡1 504 763 (発生年2022)"}
+  {:name "IBGE Estatísticas do Registro Civil 2023 — informativo (v50)" :url "https://biblioteca.ibge.gov.br/visualizacao/periodicos/135/rc_2023_v50_informativo.pdf" :version "2025年刊行 (2023年分)" :fetched "2026-11-22T22:17:00Z" :sha256 "9fd9c1799a26f0996144783ea7e8d2f98a52b906758db573a784bd23da4459b5" :used-for "2023年の出生2 523 267・死亡1 429 575 (傾向の照合)"}
+  {:name "IBGE Estatísticas do Registro Civil 2024 — informativo (v51)" :url "https://biblioteca.ibge.gov.br/visualizacao/periodicos/135/rc_2024_v51_informativo.pdf" :version "2025年刊行 (2024年分)" :fetched "2026-11-22T22:15:10Z" :sha256 "5f449bdc351fc94c20e59f98955690718114adc841011f75c1ac53eee8ede0f9" :used-for "2024年の出生2 376 901・死亡1 495 386 (傾向の照合)"}
+  {:name "IBGE Estimativas de Sub-Registro de Nascimentos e Óbitos 2024 (liv102278)" :url "https://biblioteca.ibge.gov.br/visualizacao/livros/liv102278_informativo.pdf" :version "IBGE 2025" :fetched "2026-11-22T22:15:10Z" :sha256 "32dd624abc75bd5caaa629c027345316cd70f1a5847477eefe5efddbd6b8b9aa" :used-for "SINASC 2 389 307・SIM 1 531 936 (2024) と未登録率 (SINASC 0.39%、SIM 1.00%)"}
+  {:name "IBGE Projeções da População Revisão 2024 — Tabela 3 (xlsx, 01.07)" :url "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/projecoes_2024_tab3_grupos_etarios_especificos.xlsx" :version "2024-08-22 (Revisão 2024)" :fetched "2026-11-22T22:15:10Z" :sha256 "a759c134c9cf0d36f9a633cc9700356f0230ed9be07c47b0b3ab2ee725076b20" :used-for "調整人口 (conciliação) の比較: 2022 = 210 862 983"}
+  {:name "IBGE Projeções Revisão 2024 — Tabela 4 指示子 (xlsx)" :url "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/projecoes_2024_tab4_indicadores.xlsx" :version "2024-08-22 (Revisão 2024)" :fetched "2026-11-22T22:15:10Z" :sha256 "0169644992d15a122bc14e42b07d40a3e01fe27303ed2d87cf54fa1f64f00fbc" :used-for "RDI65/IE65の調整値との照合"}
+  {:name "IBGE Projeções Revisão 2024 — Série Relatórios Metodológicos v40 (3ª ed.)" :url "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/Serie_Relatorios_Metotodologicos_v40_Projecoes_da_Populacao_Brasil_e_Unidades_da_Federacao_Revisao_2024_3a_Edicao.pdf" :version "3ª edição, Revisão 2024" :fetched "2026-11-22T22:15:10Z" :sha256 "37e15915af8d11c79ea11047353fcc095c4bd9a2cce4e3972a38ae9d5f185f9d" :used-for "Tabela 4: 2010-2022年の国際 saldo migratório (2022年 = -252 799)"}]
+ :common
+ {:p0 203.080756 :e0 22.169101 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.01251866 :death-rate 0.00740968 :net-migration -0.252799
+  :aging-coef 0.00602303 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2022-rates
+  {:label "2022年実測率固定 (出生12.52‰・死亡7.41‰・純移入-0.253M/年・高齢化係数は2010-2022実測)"}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.01126679}
+  :faster-aging
+  {:label "高齢化加速 (係数×1.5、感度)"
+   :aging-coef 0.00903455}}}
