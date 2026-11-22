@@ -1,0 +1,14 @@
+#:model{:id :nigeria-population-aging,
+        :as-of "2026-11-23",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. P/E/birth/death are NPC-2022 projection series via NBS Demographic Statistics Bulletin 2022 (Annex 3 + §5.2 Table 7, single series); net migration is a zero assumption (NPC publishes no national net-migration rate; implied residual ~0.010M/yr); aging coefficient derived from NPC 2021->2022 65+ change under elder-multiple 3.0 (same assumption as Tier A/B, not measured). Year-1 checked for directional consistency only.",
+        :oracle {:script "oracle/nigeria_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/nigeria-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2022-rates {:checkpoints {0 [216.783 6.152] 1 [222.26 6.41] 5 [245.586 7.474] 10 [278.215 8.889] }}
+         :lower-fertility {:checkpoints {0 [216.783 6.152] 1 [221.46 6.41] 5 [241.2 7.452] 10 [268.367 8.8] }}
+         :faster-aging {:checkpoints {0 [216.783 6.152] 1 [222.26 6.64] 5 [245.586 8.599] 10 [278.215 11.097] }}
+         }}

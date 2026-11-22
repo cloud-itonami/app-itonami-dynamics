@@ -1,0 +1,40 @@
+{:model/id :nigeria-population-aging
+ :model/as-of "2026-11-23"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。P・E・出生率・死亡率は同一出典系列（全て National Population Commission 2022年推計、NBS Demographic Statistics Bulletin 2022経由）で揃える。純移民は未公表のためゼロ仮定。老年死亡倍率3.0は既存Tier A/B共通の感度仮定で実測ではない。"
+ :model/source
+ {:cite "National Bureau of Statistics (Nigeria), Demographic Statistics Bulletin 2022 (FINAL, December 2023), Annex 3 (projected population by age group) and §5.2 Table 7 (vital indicators). Age-group population source line in the bulletin: National Population Commission, 2022 (2006 census cohort-component projection series)."
+  :version "NPC 2022 projection series (2006 census baseline), as published in NBS Demographic Statistics Bulletin 2022"
+  :base-year 2022
+  :url "https://nigerianstat.gov.ng/pdfuploads/DEMOGRAPHIC_BULLETIN_2022_FINAL.pdf"
+  :retrieved "2026-11-22T22:15:12Z"
+  :captures
+  [{:file "nbs-demographic-bulletin-2022.pdf"
+    :url "https://nigerianstat.gov.ng/pdfuploads/DEMOGRAPHIC_BULLETIN_2022_FINAL.pdf"
+    :bytes 1493492
+    :sha256 "b1ee55e5952a8d992f64a63adda1af1eb42a81fd0e5659b19b9581cc9812150d"}]
+  :capture-retention ".agent-output/awai-3358/captures in the AWAI-3358 worktree (not committed)"}
+ :model/observed-evidence
+ {:p2022 {:value 216.783381 :unit :million :note "216,783,381人。Annex 3 Total 2022。" :source "NBS Demographic Statistics Bulletin 2022, Annex 3 (NPC 2022)"}
+  :e2022 {:value 6.152284 :unit :million :note "6,152,284人 = 65-69 2,711,898 + 70-74 1,723,741 + 75-79 985,308 + 80+ 731,337。Annex 3 2022年列。" :source "same (computed sum in code)"}
+  :cbr2022 {:value 36.08 :unit :per-1000 :note "Table 7 CBR per 1000, 2022。" :source "same"}
+  :cdr2022 {:value 11.115 :unit :per-1000 :note "Table 7 CDR per 1000, 2022 (本文では11.12と丸め)。データ表の11.115を採用。" :source "same"}
+  :tfr2022 {:value 5.14 :unit :children-per-woman :note "Table 7 Calculated TFR, 2022。モデル入力には使わない（参考）" :source "same"}
+  :dependency2022 {:value 0.838 :note "Table 7 Dependency ratio, 2022（定義はbulletin未明記）。本モデルは65+比率と老年従属指数 E/(15-64) をコードで再計算する" :source "same (not used as input)"}}
+ :model/raw-annex3-persons
+ {:2022 {:0-4 33596028 :5-9 30071017 :10-14 27577906 :15-19 21861366 :20-24 18893498 :25-29 15878581 :30-34 13730264 :35-39 12833938 :40-44 11231454 :45-49 8700249 :50-54 6828653 :55-59 5373790 :60-64 4054353 :65-69 2711898 :70-74 1723741 :75-79 985308 :80+ 731337 :total 216783381}
+  :2021 {:65-69 2570192 :70-74 1656401 :75-79 948041 :80+ 723501 :total 211493324}}
+ :common
+ {:p0 216.783381 :e0 6.152284 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.03608 :death-rate 0.011115 :net-migration 0.0
+  :aging-coef 0.002192767 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2022-rates
+  {:label "2022年率固定 (出生36.08‰・死亡11.115‰・純移入ゼロ)"}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.032472}
+  :faster-aging
+  {:label "高齢化加速 (係数1.5倍、感度)"
+   :aging-coef 0.00328915}}}
