@@ -81,3 +81,22 @@ basilisp run oracle/brazil_population_oracle_run.cljc \
 basilisp と babashka で小数第3位まで一致を確認すること。
 `.cljc` では loop 変数と係数束縛の同名シャドウを避け、
 シナリオ名は定義と照合の全箇所で統一すること (AWAI-2811/2819の教訓)。
+
+## 検証 (bb, clojure -M 不使用)
+
+```
+bb test/brazil_check.cljc      # 18 checks, 0 failures
+bb test/tier_b_check.cljc      # 12 PASS, 0 FAIL (BRA登録済、比較数 20)
+bb test/examples_edn_check.cljc # 56 EDN files, 0 failures
+```
+
+- `brazil_check` は :model/raw-census-persons の生データから再導出。
+  総人口 = 年齢階級合計 (相対偏差 0.0、整数完全一致) を assert。
+  :age-15-64 は computed-residual のため、公式の 0-14・65+ 絶対数から
+  独立に引き直して EDN 記載値 (140,782,394) と一致を検証。
+  公開済み oracle 結果を Tier B エンジンで再現 (3シナリオ×4cp 一致)。
+  負テスト: 改ざん係数検出、forged e0 検出、rank/score なし。
+- Tier A/B 比較 (未調停): ブラジル P 203.081 vs WPP 211.141 (−3.8%)、
+  E 22.169 vs 22.452 (−1.3%)。水準差は推計の構成と年差・系列差。
+
+PR: https://github.com/cloud-itonami/app-itonami-dynamics/pull/39

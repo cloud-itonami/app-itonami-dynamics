@@ -31,6 +31,9 @@
   {:name "IBGE Projeções da População Revisão 2024 — Tabela 3 (xlsx, 01.07)" :url "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/projecoes_2024_tab3_grupos_etarios_especificos.xlsx" :version "2024-08-22 (Revisão 2024)" :fetched "2026-11-22T22:15:10Z" :sha256 "a759c134c9cf0d36f9a633cc9700356f0230ed9be07c47b0b3ab2ee725076b20" :used-for "調整人口 (conciliação) の比較: 2022 = 210 862 983"}
   {:name "IBGE Projeções Revisão 2024 — Tabela 4 指示子 (xlsx)" :url "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/projecoes_2024_tab4_indicadores.xlsx" :version "2024-08-22 (Revisão 2024)" :fetched "2026-11-22T22:15:10Z" :sha256 "0169644992d15a122bc14e42b07d40a3e01fe27303ed2d87cf54fa1f64f00fbc" :used-for "RDI65/IE65の調整値との照合"}
   {:name "IBGE Projeções Revisão 2024 — Série Relatórios Metodológicos v40 (3ª ed.)" :url "https://ftp.ibge.gov.br/Projecao_da_Populacao/Projecao_da_Populacao_2024/Serie_Relatorios_Metotodologicos_v40_Projecoes_da_Populacao_Brasil_e_Unidades_da_Federacao_Revisao_2024_3a_Edicao.pdf" :version "3ª edição, Revisão 2024" :fetched "2026-11-22T22:15:10Z" :sha256 "37e15915af8d11c79ea11047353fcc095c4bd9a2cce4e3972a38ae9d5f185f9d" :used-for "Tabela 4: 2010-2022年の国際 saldo migratório (2022年 = -252 799)"}]
+ :model/raw-census-persons
+ {:2022 {:total 203080756 :age-0-14 40129261 :age-15-64 140782394 :age-65plus 22169101 :births 2542298 :deaths 1504763 :net-migration -252799}
+  :2010 {:total 190755799 :age-65plus 14081477}}
  :common
  {:p0 203.080756 :e0 22.169101 :dt 0.05 :sim-years 10
   :checkpoints-years [0 1 5 10]
