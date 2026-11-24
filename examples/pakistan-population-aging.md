@@ -188,4 +188,4 @@ bb test/pakistan_check.cljc
 
 ## PR
 
-PR: (作成後に追記)
+PR: https://github.com/cloud-itonami/app-itonami-dynamics/pull/41
