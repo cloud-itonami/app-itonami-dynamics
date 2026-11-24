@@ -201,4 +201,4 @@ bb test/bangladesh_check.cljc
 
 ## PR
 
-PR: (gh pr create の --head で作成後にURLを投入する)
+PR: https://github.com/cloud-itonami/app-itonami-dynamics/pull/42
