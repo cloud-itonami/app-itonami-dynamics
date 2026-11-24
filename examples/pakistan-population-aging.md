@@ -3,9 +3,24 @@
 分類: シナリオであって予測ではない。総人口Pと65歳以上Eの2ストック。
 起点はPBS第7回国勢調査2023 (2023年3–5月実施、CCI承認2023-08-05) の
 実測・詳細系列 (detailed population)。出生・死亡率はPBSの域内人口動態調査
-PDS-2020 (2020年基準)。純移民はPBSが全国純移民率を公表しないためゼロ仮定
-(基準がそのまま純移民ゼロシナリオを兼ねる)。高齢化係数は2017→2023の両国勢調査の
+PDS-2020 (2020年基準)。純移民は基準に UN WPP 2024 の PAK netm2023
+(-1.619557 M/年、derived・別系列・実測ではない) を置き、純移民ゼロは
+別本 (no-migration) として定義する。高齢化係数は2017→2023の両国勢調査の
 変化から中点法で導出した実測。高齢死亡倍率3.0はTier A/B共通の感度仮定で実測ではない。
+
+## 基準と純移民ゼロの区別 (どちらを「基準」と呼ぶか)
+
+- `baseline-2023-rates` (基準、移民あり): net-migration は UN WPP 2024 の
+  PAK netm2023 (-1.619557 M/年)。PBSが全国純移民率を公表しないため、
+  PBS実測系列だけでは純移民を置けない。WPPは PBS実測ではないが、
+  パキスタンを純流出国とする唯一の全国推計であり、流出を無視する
+  ゼロ仮定よりも期待フローに近い。derived・別系列であることを明記し、
+  基準として採用する。
+- `no-migration` (純移民ゼロ、必須シナリオの別本): net-migration 0.0
+  (EDN `:unmeasured`、仮定)。感度として残し、基準との差は純移民効果だけである。
+- 理由: 基準をゼロで置くと、必須の「純移民ゼロ」と「出生率変化」しか残らず、
+  3本の定義が重なる (実質2本体制) になる。流出実態を基準に含めることで、
+  3本の定義が互いに異なり、ゼロ本は純粋な感度として位置づく。
 
 ## 出典のpin
 
@@ -36,8 +51,15 @@ PDS-2020 (2020年基準)。純移民はPBSが全国純移民率を公表しな�
   版: PDS-2020 (reference year 2020)。取得: 2026-11-24T11:37:00Z
   sha256 `4b97b43273b92811a5190ddf551bb451e210545bc4ff773ae15df45fd958fe27`
   (6,552,734 bytes)。Table 3.1 CBR 27‰、Table 4.1 CDR 6.7‰、RNI 2.0%、TFR 3.7。
+- UN WPP 2024 via Tier B inputs (awai-3384-wpp2024-tier-b-inputs 2026-11-18.1):
+  https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/CSV_FILES/WPP2024_Demographic_Indicators_Medium.csv.gz
+  版: WPP 2024 Medium variant, estimates to 2023 (derived via Tier B inputs EDN)。
+  取得: 2026-11-24T11:42:11Z
+  sha256 `6d3ae1a6f18bf46c3411343e38226df6e9cc451e7f9323c3b7cac0d23cbc6f8f`
+  (51,306 bytes)。`examples/tier-b/wpp2024-tier-b-inputs.edn` の PAK `:netm2023`
+  -1.619557 M/年 (derived・別系列・実測ではない)。sha256は同ファイルのもの。
 
-capturesはローカルのままコミットしない (本worktree外の /tmp/pak)。
+capturesはローカルのままコミットしない。
 
 ## 2ストックの数値表
 
@@ -51,7 +73,8 @@ capturesはローカルのままコミットしない (本worktree外の /tmp/pa
 | `:e0` | 8.531184 | million persons (8,531,184人 ÷ 1e6) | PBS Census 2023 Table 5 (65 & ABOVE) |
 | `:birth-rate` | 0.027 | fraction (27‰ ÷ 1000) | PBS PDS-2020 Table 3.1 (2020) |
 | `:death-rate` | 0.0067 | fraction (6.7‰ ÷ 1000) | PBS PDS-2020 Table 4.1 (2020) |
-| `:net-migration` | 0.0 | million / year | 仮定 (下記) |
+| `:net-migration` (基準) | -1.619557 | million / year | WPP 2023 derived (実測ではない) |
+| `:net-migration` (no-migration) | 0.0 | million / year | 仮定 (:unmeasured) |
 | `:aging-coef` | 0.0013875793 | 1/year | 2017→2023両国勢調査から中点法で導出 (下記) |
 | `:elder-death-multiple` | 3.0 | 倍率 | 感度仮定 (Tier A/B共通、実測ではない) |
 | `:dt` / `:sim-years` | 0.05 / 10 | year | Tier A/Bと同一 |
@@ -78,18 +101,20 @@ capturesはローカルのままコミットしない (本worktree外の /tmp/pa
   影響: 率は起点より3年古い2020年値であり、2020–2023年の急速な低下/改善は反映されない。
   PDHS 2017–18のCBR 29‰ (PDS-2020 Table 3.1の比較列) は参考値であり入力にはしない。
   WPP2024 (CBR 27.806‰、CDR 6.466‰) とは近いが、系列・年次が異なるため比較のみとし、
-  入力に混ぜていない。
+  出生・死亡率の入力には混ぜていない。純移民のみ WPP値を基準に用い、別系列であることを明示した。
 
-### 純移民ゼロ (必須シナリオ)
+### 純移民ゼロ (必須シナリオ、別本)
 
-- 基準の `:net-migration` は 0.0 であり、必須シナリオ「純移民ゼロ」を兼ねる。
-  別本は定義しない。`test/pakistan_check.cljc` の `baseline-is-zero-migration`
-  で担保する。
-- ゼロは実測ではなく仮定。PBSは全国純移民率を公表しない。
-  Census 2017→2023の残差 (年平均 ΔP=5.462M − (b−d)·P中=4.549M = +0.914M/年)
+- `:net-migration 0.0` は実測ではなく仮定であり、EDNの
+  `:model/observed-evidence` の `:net-migration-2023-unmeasured` に
+  `:status :unmeasured` として持つ。実測と仮定を分けるためである。
+- 別本 `no-migration` は net-migration のみを 0.0 に変更し、他のパラメータは
+  基準と同一である。`test/pakistan_check.cljc` の
+  `required-scenarios-distinct` と `no-migration-is-zero` で担保する。
+- Census 2017→2023の残差 (年平均 ΔP=5.462M − (b−d)·P中=4.549M = +0.914M/年)
   は、純移民の実測として採用できない (後述の通りカバレッジ変化で汚染)。
   チェックは residual が正 (残差として implausible) であることだけを検証し、
-  justification としては使わない。
+  justification としては使わない。基準の WPP -1.62M/年も derived であり実測ではない。
 
 ## 構造
 
@@ -98,20 +123,22 @@ P' = (b − d) * P + m
 E' = a * (P − E) − me * d * E
 ```
 
-m=0.0、a=0.0013875793 (導出値)、me=3.0。1年目は自然増のみで
-人口 +4.93M/年 ( (0.027−0.0067)×240.458M ≈ 4.89Mと同程度)、
+m=-1.619557 (基準)、a=0.0013875793 (導出値)、me=3.0。1年目は
+人口 +3.29M/年 (自然増 4.89M/年から流出 1.62M/年を差し引いたものと同程度)、
 65+ +0.15M/年で方向・規模は自然増と一致する (Tier B方針通り水準は調停しない)。
 
-## 必須3シナリオ
+## 必須3シナリオ (+ 感度1本)
 
 | シナリオ | 定義 | 10年後 (2033年) 総人口 | 65歳以上 | 高齢化率 |
 |---|---|---|---|---|
-| `baseline-2023-rates` (基準=純移民ゼロ) | 2023起点・PDS-2020率固定、m=0 | 294.548 | 10.222 | 3.5% |
-| `lower-fertility` (出生率変化) | 出生率×0.9 (0.027→0.0243) | 286.709 | 10.174 | 3.5% |
-| `faster-aging` (感度、任意の追加本) | 高齢化係数×1.5 (0.0013876→0.0020814) | 294.548 | 11.828 | 4.0% |
+| `baseline-2023-rates` (基準、移民あり) | 2023起点・PDS-2020率固定 + 純移民 WPP -1.619557 | 276.602 | 10.110 | 3.7% |
+| `no-migration` (純移民ゼロ、必須) | 基準と net-migration のみ異なる (0.0、仮定) | 294.548 | 10.222 | 3.5% |
+| `lower-fertility` (出生率変化、必須) | 出生率×0.9 (0.027→0.0243)、他は基準と同一 | 269.009 | 10.063 | 3.7% |
+| `faster-aging` (感度、任意の追加本) | 高齢化係数×1.5 (0.0013876→0.0020814)、他は基準と同一 | 276.602 | 11.661 | 4.2% |
 
+移民あり基準は純移民ゼロより10年後で約 -18M (-6%) である
+(276.602 vs 294.548)。丸めた -1.62M/年では 276.597 であり、差は 0.005 である。
 若い人口構造 (65+ 3.5%) のため、10年でも高齢化率は大きくは動かない。
-baselineは純移民ゼロと一致するため重複シナリオは作らない。
 
 ## 整合のassert結果
 
@@ -119,21 +146,24 @@ baselineは純移民ゼロと一致するため重複シナリオは作らない
 bb test/pakistan_check.cljc
 ```
 
-- `required-scenarios-present`: 3シナリオ (baseline/lower-fertility/faster-aging)
-- `baseline-is-zero-migration`: 基準 net-migration = 0.0 (必須の「純移民ゼロ」を兼ねる)
+- `required-scenarios-present`: 4シナリオ (baseline/no-migration/lower-fertility/faster-aging)
+- `required-scenarios-distinct`: 3必須シナリオの有効定義は互いに異なる
+- `no-migration-is-zero`: no-migration は net-migration のみを 0.0 に変更
 - `birth-rate-change-present`: lower-fertility は出生率を×0.9に下げた本
+- `net-migration-baseline-wpp`: 基準 net -1.619557 (WPP derived)
+- `net-migration-unmeasured-zero`: 0.0 は `:unmeasured` として observed-evidence に保持
 - `total-vs-age-sum-2023`: 0-14 97,533,739 + 15-64 134,393,166 + 65+ 8,531,184 = 240,458,089 (差 0)
 - `total-vs-age-sum-2017`: 83,716,496 + 116,255,314 + 7,712,816 = 207,684,626 (差 0)
 - `p0/e0-matches-conversion`: 換算前後が一致
 - `aging-coef-derived`: 格納値と導出値の差 < 1e-8
-- `results-reproduced`: Tier Bエンジンで3シナリオ×4チェックポイントが再現
+- `results-reproduced`: Tier Bエンジンで4シナリオ×4チェックポイントが再現
 - ネガティブコントロール: 係数改変の検出、e0捏造の検出、rank/score不在
-- 合計 21 checks、0 failures
+- 合計 24 checks、0 failures
 
 bb/Basilisp一致記録 (版・日付・sha256):
-- babashka 1.12.218、basilisp 0.5.1、2026-11-24
+- babashka 1.12.218、basilisp 0.5.1、2026-11-24T11:42:58Z
 - `bb` と `basilisp run` の出力は小数第3位まで一致 (diff なし、IDENTICAL)
-- generated sha256: `c340105863ecd6c78d3312f857fb4e7d2f3cdd8f562dfb6b2a099e51b41ad073`
+- generated sha256: `8e0de65ff4bc1beea7bbee50096eee200d5a67ed4cf954fae0ffd5cd30b4bea2`
 
 既存検査 (Tier Bエンジン再現チェックにパキスタンが加わり、
 Tier A/B比較に PAK として追加):
@@ -147,7 +177,8 @@ Tier A (PBS Census 2023) とTier B (WPP 2023) の差: P −2.8% (240.458 vs 247.
 E −17.9% (8.531 vs 10.386)。(WPP 2023: CBR 27.806‰、CDR 6.466‰、
 net-migration −1.620M/年)。系列 (Census実測 vs WPP推計)、詳細人口 vs 総数、
 および年の違いを含むため、調整せず報告する。特に65+の差はWPP推計 (約4.2%) が
-Census実測 (3.55%) より高いことに由来する。
+Census実測 (3.55%) より高いことに由来する。Tier Bは基準 (WPP net) の
+系列を共有するため、純移民の差は比較に現れにくい。
 
 ## 未取得・未検証の一覧 (unverified)
 
@@ -158,28 +189,34 @@ Census実測 (3.55%) より高いことに由来する。
   代替とした。年次のずれ (2023 vs 2020) は上記の通り影響を記録した。
 - PDHS (Pakistan Demographic and Health Survey) 原報告書: 取得していない。
   PDS-2020 Table 3.1の比較列 (CBR 29‰、2017–18) のみ引用し、入力にはしていない。
-- 全国純移民率: PBSが公表していないためゼロ仮定。残差 +0.91M/年は
-  2017–2023のカバレッジ変化 (detailed定義の差・1,041,342人) による
-  汚染の可能性が高く、移民の実測として使えない。
-  WPPの net-migration −1.62M/年のような大きな流出は、純移民ゼロ仮定では
-  モデル化されない (baselineは純移民ゼロシナリオでもあるため、その影響は明示する)。
+- 全国純移民率 (PBS): PBSが公表していないため、0.0は仮定 (:unmeasured)。
+  残差 +0.91M/年は 2017–2023のカバレッジ変化 (detailed定義の差・1,041,342人)
+  による汚染の可能性が高く、移民の実測として使えない。
+- 純移民の基準値 (WPP 2023 -1.62M/年): derived・別系列 (WPP推計、PBS実測ではない)。
+  2023年の single-year 推計であり、モデルの純移民シナリオとして流用している。
+  PBS実測が得られれば置換されるべき値である。
 - 高齢死亡倍率 3.0: 実測ではなく感度仮定 (Tier A/B共通)。
 - PDS-2020の標準誤差・使用率重み: 報告書の点推定のみを採用し、誤差評価はしていない。
-- 2023 censusの単歳表 (Table 4): スカラー37.2M (0–4) の照合には使用したが、
+- 高齢化係数 (0.0013875793): 2017→2023の2時点差から中点法で導出したもので、
+  1,041,342人の定義差 (2023 detailed vs 総数) と国勢調査間のカバレッジ差の
+  影響を受けうる。残差と同様に係数も純粋な実測ではなく、定義・カバレッジ差を
+  含みうる。感度として faster-aging (×1.5) で範囲を示す。
+- 2023 censusの単歳表 (Table 4): 0–4等の照合には使用したが、
   5歳階級の詳細表 (Table 5) のみをモデル入力とした。
 
-## 再現
+## 再現 (相対パスのみ)
 
 ```bash
 grep -e ':birth-rate 0.027' -e ':death-rate 0.0067' \
      -e ':aging-coef 0.0013875793' -e ':p0 240.458089' -e ':e0 8.531184' \
-     -e ':net-migration 0.0' \
+     -e ':net-migration -1.619557' \
      examples/pakistan-population-aging-scenarios.edn
-bb oracle/pakistan_population_oracle_run.cljc \
-  > examples/generated/pakistan-population-aging-results.edn
-basilisp run oracle/pakistan_population_oracle_run.cljc \
-  > /tmp/pak/basil.out && diff /tmp/pak/basil.out \
-  examples/generated/pakistan-population-aging-results.edn
+bb oracle/pakistan_population_oracle_run.cljc > pakistan-bb.out
+basilisp run oracle/pakistan_population_oracle_run.cljc > pakistan-basilisp.out
+diff pakistan-bb.out pakistan-basilisp.out
+diff pakistan-bb.out examples/generated/pakistan-population-aging-results.edn
+cp pakistan-bb.out examples/generated/pakistan-population-aging-results.edn
+rm pakistan-bb.out pakistan-basilisp.out
 bb test/pakistan_check.cljc
 ```
 

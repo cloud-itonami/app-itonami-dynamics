@@ -1,7 +1,7 @@
 {:model/id :pakistan-population-aging
  :model/as-of "2026-11-24"
  :model/classification :scenario-not-forecast
- :model/interpretation "総人口Pと65歳以上Eの2ストック。P・Eは同一出典系列（PBS 第6回国勢調査2017 Table 5 と第7回国勢調査2023 Table 5、detailed population）で揃える。出生・死亡率はPBSの域内人口動態調査 PDS-2020（2020年基準、2022年11月刊）を採用：Census 2023は出生・死亡者数を公表しないため、同調査がPBSのvital-rate系列であり、出版者（PBS）は共通だが調査製品は Census と PDS で異なる（年次も2023と2020でずれる）。純移民はPBSが全国純移民率を公表しないためゼロ仮定であり、基準がそのまま純移民ゼロシナリオになる（residualによるjustificationは採用しない。下記md参照）。高齢死亡倍率3.0は既存Tier A/B共通の感度仮定で実測ではない。"
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。P・Eは同一出典系列（PBS 第6回国勢調査2017 Table 5 と第7回国勢調査2023 Table 5、detailed population）で揃える。出生・死亡率はPBSの域内人口動態調査 PDS-2020（2020年基準、2022年11月刊）を採用：Census 2023は出生・死亡者数を公表しないため、同調査がPBSのvital-rate系列であり、出版者（PBS）は共通だが調査製品は Census と PDS で異なる（年次も2023と2020でずれる）。純移民はPBSが全国純移民率を公表しない。本モデルでは基準に UN WPP 2024 の PAK netm2023 (-1.619557 M/年、Tier B入力経由の derived・別系列・実測ではない) を用い、純移民ゼロ (net-migration 0.0) は別本 no-migration として定義する（residualによるjustificationは採用しない）。高齢死亡倍率3.0は既存Tier A/B共通の感度仮定で実測ではない。"
  :model/observed-evidence
  {:p2023-detailed {:value 240.458089 :unit :million :note "240,458,089人。Census 2023 Table 5 ALL AGES (detailed population)。PBS公表の総数241,499,431人とは異なり、年齢詳細があるのは240,458,089人のみ（残り1,041,342人はhead countのみ）。両ストックの合計と整合する詳細系列をモデル起点とする。" :source "PBS 7th Population and Housing Census 2023, Table 5"}
   :age-0-14-2023 {:value 97.533739 :unit :million :note "97,533,739人 (UNDER 15)" :source "same Table 5"}
@@ -16,27 +16,33 @@
   :cbr2020-pds {:value 27 :unit :per-1000 :note "PDS-2020 Table 3.1 全国値 (2020年、都市23・農村29)。PDHS 2017-18は29" :source "PBS Pakistan Demographic Survey 2020 (Nov 2022)"}
   :cdr2020-pds {:value 6.7 :unit :per-1000 :note "PDS-2020 Table 4.1 全国値 (2020年)。Rate of Natural Increase 2.0%" :source "same PDS-2020"}
   :tfr2020-pds {:value 3.7 :unit :children-per-woman :note "PDS-2020 Summary of Findings。モデル入力には使わない (参考)" :source "same PDS-2020"}
+  :net-migration-2023-unmeasured {:value 0.0 :unit :million-per-year :status :unmeasured :note "PBSは全国純移民率を公表しないため0.0は仮定 (実測ではない)。シナリオ no-migration で使用。基準 (baseline-2023-rates) は WPP 2023由来 -1.619557 M/年を用いる" :source :unmeasured-assumption}
+  :net-migration-wpp-2023 {:value -1.619557 :unit :million-per-year :status :derived :note "UN WPP 2024 PAK netm2023 (-1.619557 M/年)、Tier B入力 (examples/tier-b/wpp2024-tier-b-inputs.edn) 経由。derived・別系列 (WPP推計、PBS実測ではない) で基準入力に用いる" :source "UN WPP 2024 via Tier B inputs (PAK netm2023)"}
   :total-2023-head {:value 241.499431 :unit :million :note "241,499,431人。PBS公表総数 (Key Findings Table 2.1)。年齢詳細なしの1,041,342人を含むためモデル起点にはしない" :source "PBS Key Findings Report 2023"}}
  :model/source-pins
  [{:name "PBS 7th Population and Housing Census 2023 - Table 5: Population by Selected Age Group, Sex and Rural/Urban, Census 2023 (national)" :url "https://www.pbs.gov.pk/wp-content/uploads/census_tables/tables/table_5_national.pdf" :version "Census 2023 final detailed tables" :fetched "2026-11-24T11:36:00Z" :sha256 "b7b38b56c31c294019a704c78ad3535c852d1f6141db42cbf6ecff214278cc71" :bytes 27111 :used-for "詳細総人口 240,458,089、0-14 (UNDER 15) 97,533,739、15-64 134,393,166、65+ 8,531,184 (2023)"}
   {:name "PBS 6th Population and Housing Census 2017 - Table 5: Population by Selected Age Group, Sex and Rural/Urban (Table05n)" :url "https://pbs.gov.pk/wp-content/uploads/2020/07/Table05n.pdf" :version "Census 2017 final tables" :fetched "2026-11-24T11:37:00Z" :sha256 "bbc2357131f3e230ddc1ecced2685a04b8cbb33b3c17dee5a09ced6868157df1" :bytes 104311 :used-for "総人口 207,684,626、15-64 116,255,314、65+ 7,712,816、UNDER 16 88,150,064 (2017)"}
   {:name "PBS Census 2017 - Table 4: Population by Single Year Age, Sex and Rural/Urban (Table04n)" :url "https://pbs.gov.pk/wp-content/uploads/2020/07/Table04n.pdf" :version "Census 2017 final tables" :fetched "2026-11-24T11:37:00Z" :sha256 "a65fd70662d58a4ae44c5ac72604d9f8627d3bdc358cc84055e532a15641a56f" :bytes 123837 :used-for "15歳単歳 4,433,568 (2017の0-14残差の検算: UNDER 16 − 15歳 = 83,716,496)"}
   {:name "PBS 7th Population and Housing Census 2023 Key Findings Report (First Ever Digital Census)" :url "https://pbs.gov.pk/wp-content/uploads/2020/07/Key_Findings_Report.pdf" :version "PBS (2024 PDF, census Mar-May 2023, CCI approval 2023-08-05); Table 2.12 age shares" :fetched "2026-11-24T11:36:00Z" :sha256 "f322aa885724d91d36b73e01179c3024e2f7282af4861812cc08b6e71b4c217f" :bytes 26122114 :used-for "総数241,499,431・詳細相当240,458,089の関係 (1,041,342 head-count only)、年齢シェア照合 (65+ 3.55%)"}
-  {:name "PBS Pakistan Demographic Survey 2020 (PDS-2020, November 2022)" :url "https://pbs.gov.pk/wp-content/uploads/2020/07/Pakistan_Demographic_Survey-2020-3.pdf" :version "PDS-2020, reference year 2020, fieldwork 2021-04-28 to 2021-10-15" :fetched "2026-11-24T11:37:00Z" :sha256 "4b97b43273b92811a5190ddf551bb451e210545bc4ff773ae15df45fd958fe27" :bytes 6552734 :used-for "CBR 27‰ (Table 3.1)、CDR 6.7‰ (Table 4.1)、RNI 2.0%、TFR 3.7 (2020)"}]
+  {:name "PBS Pakistan Demographic Survey 2020 (PDS-2020, November 2022)" :url "https://pbs.gov.pk/wp-content/uploads/2020/07/Pakistan_Demographic_Survey-2020-3.pdf" :version "PDS-2020, reference year 2020, fieldwork 2021-04-28 to 2021-10-15" :fetched "2026-11-24T11:37:00Z" :sha256 "4b97b43273b92811a5190ddf551bb451e210545bc4ff773ae15df45fd958fe27" :bytes 6552734 :used-for "CBR 27‰ (Table 3.1)、CDR 6.7‰ (Table 4.1)、RNI 2.0%、TFR 3.7 (2020)"}
+  {:name "UN WPP 2024 via Tier B inputs (awai-3384-wpp2024-tier-b-inputs 2026-11-18.1)" :url "https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/CSV_FILES/WPP2024_Demographic_Indicators_Medium.csv.gz" :version "WPP 2024 Medium variant, estimates to 2023 (derived via Tier B inputs EDN)" :fetched "2026-11-24T11:42:11Z" :sha256 "6d3ae1a6f18bf46c3411343e38226df6e9cc451e7f9323c3b7cac0d23cbc6f8f" :bytes 51306 :used-for "PAK netm2023 -1.619557 M/年 (Tier B inputs EDNの PA K :netm2023、derived・別系列・実測ではない)。Tier B inputs EDNのsha256は同ファイルのもの"}]
  :model/raw-census-persons
  {:2023 {:total 240458089 :age-0-14 97533739 :age-15-64 134393166 :age-65plus 8531184}
   :2017 {:total 207684626 :age-0-14 83716496 :age-15-64 116255314 :age-65plus 7712816}}
  :common
  {:p0 240.458089 :e0 8.531184 :dt 0.05 :sim-years 10
   :checkpoints-years [0 1 5 10]
-  :birth-rate 0.027 :death-rate 0.0067 :net-migration 0.0
+  :birth-rate 0.027 :death-rate 0.0067 :net-migration -1.619557
   :aging-coef 0.0013875793 :elder-death-multiple 3.0}
  :scenarios
  {:baseline-2023-rates
-  {:label "2023 census起点・PDS-2020率固定 (出生27‰・死亡6.7‰・純移入ゼロ仮定・高齢化係数は2017-2023両国勢調査中点法)。純移入ゼロは必須シナリオ「純移民ゼロ」を兼ねる (基準は net-migration 0.0)"}
+  {:label "2023 census起点・PDS-2020率固定に純移民 WPP 2023値 (-1.619557 M/年、derived・別系列・実測ではない) を加えた基準 (出生27‰・死亡6.7‰・高齢化係数は2017-2023中点法)"}
+  :no-migration
+  {:label "純移民ゼロ (必須シナリオ、感度: 基準と net-migration のみ異なる、0.0は仮定)"
+   :net-migration 0.0}
   :lower-fertility
-  {:label "出生1割減 (感度、出生率に係数×0.9)"
+  {:label "出生1割減 (感度、出生率に係数×0.9、他のパラメータは基準=移民ありと同一)"
    :birth-rate 0.0243}
   :faster-aging
-  {:label "高齢化加速 (係数×1.5、感度)"
+  {:label "高齢化加速 (感度、係数×1.5、他のパラメータは基準=移民ありと同一)"
    :aging-coef 0.002081369}}}

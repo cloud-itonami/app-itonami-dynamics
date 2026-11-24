@@ -15,7 +15,7 @@
 ;; source of truth). Before running, confirm the mirror holds:
 ;;   grep -e ':birth-rate 0.027' -e ':death-rate 0.0067' \
 ;;        -e ':aging-coef 0.0013875793' -e ':p0 240.458089' -e ':e0 8.531184' \
-;;        -e ':net-migration 0.0' \
+;;        -e ':net-migration -1.619557' \
 ;;        examples/pakistan-population-aging-scenarios.edn
 ;;
 ;; Base-year consistency (persons, exact integer asserts below):
@@ -41,20 +41,22 @@
 ;; PDS-2020 vital rates (per 1000, reference year 2020); as fractions /1000
 (def pds-cbr-per1000 27)
 (def pds-cdr-per1000 6.7)
-(def net-migration-assumption 0.0) ; PBS publishes no national net migration
+(def net-migration-wpp-2023 -1.619557)    ; UN WPP 2024 PAK netm2023 (derived, not measured)
+(def net-migration-zero-assumption 0.0)   ; PBS publishes no national net migration
 (def elder-death-multiple 3.0)      ; Tier A/B shared assumption (not measured)
 
 (def common
   {:p0 240.458089 :e0 8.531184 :dt 0.05 :years 10.0
    :checkpoints [0 1 5 10]
-   :birth-rate 0.027 :death-rate 0.0067 :net-migration 0.0
+   :birth-rate 0.027 :death-rate 0.0067 :net-migration -1.619557
    :aging-coef 0.0013875793 :elder-death-multiple 3.0})
 
 (def scenario-order
-  ["baseline-2023-rates" "lower-fertility" "faster-aging"])
+  ["baseline-2023-rates" "no-migration" "lower-fertility" "faster-aging"])
 
 (def scenarios
   {"baseline-2023-rates" {}
+   "no-migration" {:net-migration 0.0}
    "lower-fertility" {:birth-rate 0.0243}
    "faster-aging" {:aging-coef 0.002081369}})
 
@@ -131,12 +133,13 @@
        "Base year is the PBS 7th Census 2023 detailed population (Table 5): 240,458,089 persons, "
        "8,531,184 aged 65+ (3.55%). The headline 241,499,431 includes 1,041,342 head-count-only "
        "persons with no age detail. Birth/death rates are PBS PDS-2020 (reference 2020: CBR 27/1000, "
-       "CDR 6.7/1000) because Census 2023 publishes no vital counts; net migration is a zero "
-       "assumption (PBS publishes no national net-migration rate; intercensal residual +0.91M/yr "
-       "is contaminated by census coverage change and is not used). The aging coefficient is derived "
-       "from the 2017->2023 census change (6-year midpoint, elder multiple 3.0 assumed, same as "
-       "Tier A/B). Baseline net-migration 0.0 doubles as the required zero-migration scenario. "
-       "Year-1 checked for directional/magnitude consistency only.\",\n"
+       "CDR 6.7/1000) because Census 2023 publishes no vital counts; the baseline net-migration "
+       "is the UN WPP 2024 PAK netm2023 -1.619557 M/yr (derived, not measured, via Tier B inputs); "
+       "the zero-migration scenario no-migration (net 0.0) is a separate assumption (PBS publishes "
+       "no national net-migration rate; intercensal residual +0.91M/yr is contaminated by census "
+       "coverage change and is not used). The aging coefficient is derived from the "
+       "2017->2023 census change (6-year midpoint, elder multiple 3.0 assumed, same as "
+       "Tier A/B). Year-1 checked for directional/magnitude consistency only.\",\n"
        "        :oracle {:script \"oracle/pakistan_population_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/pakistan-population-aging-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -165,16 +168,17 @@
     (doseq [[cp [pv ev]] traj]
       (when-not (and (<= 235.0 pv 310.0) (<= 8.0 ev 13.0) (<= ev pv))
         (throw (ex-info "bounds broken" {:scenario n :cp cp}))))
-  ;; year-1: natural increase (0.027-0.0067)*240.458M ~= 4.89M/yr at m=0
+  ;; year-1: natural increase (0.027-0.0067)*240.458M - 1.62M ~= 3.28M/yr at baseline
   (let [p1 (first (get-in results ["baseline-2023-rates" 1]))
         e1 (second (get-in results ["baseline-2023-rates" 1]))]
-    (when-not (and (< (abs (- p1 245.387)) 0.05)
-                   (< (abs (- e1 8.683)) 0.05))
+    (when-not (and (< (abs (- p1 243.751)) 0.05)
+                   (< (abs (- e1 8.682)) 0.05))
       (throw (ex-info "year-1 validation failed" {:p1 p1 :e1 e1}))))
   (let [pb (first (get-in results ["baseline-2023-rates" 10]))
+        pz (first (get-in results ["no-migration" 10]))
         pl (first (get-in results ["lower-fertility" 10]))
         eb (second (get-in results ["baseline-2023-rates" 10]))
         ef (second (get-in results ["faster-aging" 10]))]
-    (when-not (and (> pb pl) (> ef eb))
-      (throw (ex-info "ordering broken" {:baseline-p pb :lower-fert-p pl}))))
+    (when-not (and (> pb pl) (> pz pb) (> ef eb))
+      (throw (ex-info "ordering broken" {:baseline-p pb :no-mig-p pz :lower-fert-p pl}))))
   (print (emit results))))

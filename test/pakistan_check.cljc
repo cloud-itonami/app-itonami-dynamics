@@ -3,11 +3,11 @@
 ;; Re-derives every number in examples/pakistan-population-aging-scenarios.edn
 ;; from the transcribed raw census persons (:model/raw-census-persons),
 ;; asserts total vs age-group sum for 2023 and 2017, verifies the three
-;; required scenarios (baseline, zero-migration, birth-rate change), and
-;; re-runs the published oracle results through the Tier B engine
-;; (oracle/tier_b_population.cljc) to prove the same Euler. Baseline
-;; net-migration is 0.0, so baseline doubles as the required zero-migration
-;; scenario and that equivalence is asserted explicitly.
+;; required scenarios (baseline with migration, zero-migration, birth-rate
+;; change) with pairwise-distinct effective definitions, re-runs the
+;; published oracle results through the Tier B engine to prove the same
+;; Euler. The zero-migration scenario (net 0.0, EDN :unmeasured) is a
+;; separate sensitivity; the baseline net-migration is WPP (:derived).
 ;; Exit 0 = every check passed, 1 = one did not, 2 = could not run.
 (require '[clojure.edn :as edn] '[clojure.java.io :as io])
 
@@ -31,18 +31,30 @@
 (def raw17 (get-in scenarios [:model/raw-census-persons :2017]))
 
 ;; ---- 0. required scenarios (baseline / zero-migration / birth-rate change) --
-;; Baseline net-migration is 0.0, so baseline IS the zero-migration scenario;
-;; no duplicate scenario is added (skill: baseline-is-zero-migration).
+;; The three required scenarios have mutually distinct effective definitions
+;; (baseline with migration, no-migration at 0.0, lower-fertility at birth x0.9).
 (def sc (:scenarios scenarios))
 (check! :required-scenarios-present
         (and (contains? sc :baseline-2023-rates)
+             (contains? sc :no-migration)
              (contains? sc :lower-fertility)
              (contains? sc :faster-aging)
-             (= 3 (count sc)))
+             (= 4 (count sc)))
         (str "scenarios: " (pr-str (sort (keys sc)))))
-(check! :baseline-is-zero-migration
-        (== (:net-migration c) 0.0)
-        (str "baseline net-migration " (:net-migration c) "M/yr = 0 (required zero-migration scenario)"))
+(check! :required-scenarios-distinct
+        (let [eff (fn [sid] (merge {:p0 (:p0 c) :e0 (:e0 c) :birth-rate (:birth-rate c)
+                                    :death-rate (:death-rate c) :net-migration (:net-migration c)
+                                    :aging-coef (:aging-coef c)}
+                                   (select-keys (get sc sid) [:birth-rate :death-rate
+                                                              :net-migration :aging-coef])))
+              b (eff :baseline-2023-rates) z (eff :no-migration) l (eff :lower-fertility)]
+          (and (not= b z) (not= b l) (not= z l)
+               (not (== (:net-migration c) 0.0))))
+        "baseline / no-migration / lower-fertility have pairwise different effective params")
+(check! :no-migration-is-zero
+        (and (= (:net-migration (get sc :no-migration) 0.0) 0.0)
+             (not (= (:net-migration c) 0.0)))
+        (str "no-migration overrides only net-migration to 0.0 (baseline " (:net-migration c) " M/yr)"))
 (check! :birth-rate-change-present
         (and (< (:birth-rate (get sc :lower-fertility)) (:birth-rate c))
              (< (Math/abs (- (:birth-rate (get sc :lower-fertility)) (* 0.9 (:birth-rate c)))) 1e-12))
@@ -93,8 +105,20 @@
         (str "stored " (:aging-coef c) " derived " derived-a))
 (check! :aging-coef-positive-small (and (pos? derived-a) (< derived-a 0.01))
         (str "a " derived-a " 1/yr (6-year midpoint 2017->2023)"))
-(check! :net-migration-zero-assumption (== (:net-migration c) 0.0)
-        (str "net-mig " (:net-migration c) "M/yr (assumption: PBS publishes no national net migration)"))
+(check! :net-migration-baseline-wpp (== (:net-migration c) -1.619557)
+        (str "net-mig " (:net-migration c) "M/yr (WPP 2023 derived, not measured)"))
+(check! :net-migration-unmeasured-zero
+        (and (= (:status (get-in scenarios [:model/observed-evidence
+                                             :net-migration-2023-unmeasured])) :unmeasured)
+             (== (:value (get-in scenarios [:model/observed-evidence
+                                            :net-migration-2023-unmeasured])) 0.0))
+        (str "observed-evidence carries :unmeasured net-migration 0.0 (no-migration scenario)"))
+(check! :net-migration-derived-not-measured
+        (and (= (:status (get-in scenarios [:model/observed-evidence
+                                             :net-migration-wpp-2023])) :derived)
+             (== (:value (get-in scenarios [:model/observed-evidence
+                                            :net-migration-wpp-2023])) -1.619557))
+        "observed-evidence carries :derived WPP net -1.619557 (baseline, not measured)")
 ;; Residual is computed only to show why it is NOT used for justification:
 ;; census coverage changed between 2017 and 2023, so the +0.91M/yr residual
 ;; is not a migration measurement.
@@ -124,18 +148,20 @@
         :when (not= (get engine-scenarios sid) want)]
     {:scenario sid :got (get engine-scenarios sid) :want want}))
 (check! :results-reproduced (empty? mismatches)
-        (if (empty? mismatches) "all 3 scenarios x 4 checkpoints equal"
+        (if (empty? mismatches) "all 4 scenarios x 4 checkpoints equal"
             (str "mismatches " (pr-str mismatches))))
 (doseq [[sid traj] engine-scenarios]
   (println (str sid "\t" (pr-str traj))))
 (check! :bounds-and-ordering
         (let [base (get-in engine-scenarios ["baseline-2023-rates" 10])
+              nomig (get-in engine-scenarios ["no-migration" 10])
               low (get-in engine-scenarios ["lower-fertility" 10])
               fast (get-in engine-scenarios ["faster-aging" 10])]
-          (and (> (first base) (first low))
+          (and (> (first nomig) (first base))
+               (> (first base) (first low))
                (> (second fast) (second base))
                (<= (second base) (first base))))
-        "baseline P10 > lower-fertility P10, faster-aging E10 > baseline")
+        "no-migration P10 > baseline P10 > lower-fertility P10, faster-aging E10 > baseline")
 
 ;; ---- 5. negative controls ----------------------------------------------------
 (check! :negative-tampered-aging-detected
