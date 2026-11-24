@@ -114,3 +114,5 @@ bb test/examples_edn_check.cljc # 56 EDN files, 0 failures
   E 22.169 vs 22.452 (−1.3%)。水準差は推計の構成と年差・系列差。
 
 PR: https://github.com/cloud-itonami/app-itonami-dynamics/pull/39
+
+純移民ゼロ追加 (AWAI-3359 fix + AWAI-3358 注記): https://github.com/cloud-itonami/app-itonami-dynamics/pull/40
