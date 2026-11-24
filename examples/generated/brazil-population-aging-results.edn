@@ -1,7 +1,7 @@
 #:model{:id :brazil-population-aging,
-        :as-of "2026-11-22",
+        :as-of "2026-11-24",
         :interpretation
-        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Base year is the measured Censo Demográfico 2022 (Segunda Apuração, 2022-08-01): 203,080,756 persons, 22,169,101 aged 65+ (10.9%). Birth/death rates are 2022 Estatísticas do Registro Civil occurred counts; net migration is the 2022 STI saldo (-252,799/yr) from IBGE Projeções Revisão 2024; the aging coefficient is derived from the 2010->2022 census change (midpoint method, elder multiple 3.0 assumed, same as Tier A/B). Year-1 checked for directional/magnitude consistency only (reconciled projection levels sit +3.8% above census and are not matched).",
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Base year is the measured Censo Demográfico 2022 (Segunda Apuração, 2022-08-01): 203,080,756 persons, 22,169,101 aged 65+ (10.9%). Birth/death rates are 2022 Estatísticas do Registro Civil occurred counts; net migration is the 2022 STI saldo (-252,799/yr) from IBGE Projeções Revisão 2024; the aging coefficient is derived from the 2010->2022 census change (midpoint method, elder multiple 3.0 assumed, same as Tier A/B). Required scenarios: baseline-2022-rates, no-migration (pure zero migration, net-migration 0.0), lower-fertility; faster-aging is an additional sensitivity. Year-1 checked for directional/magnitude consistency only (reconciled projection levels sit +3.8% above census and are not matched).",
         :oracle {:script "oracle/brazil_population_oracle_run.cljc (one-time oracle, not CI/gate)",
                  :runtime "basilisp, macOS arm64",
                  :source-edn "examples/brazil-population-aging-scenarios.edn (mirror asserted by grep before run)"},
@@ -9,6 +9,7 @@
         :scenarios
         {
          :baseline-2022-rates {:checkpoints {0 [203.081 22.169] 1 [203.867 22.76] 5 [207.054 25.01] 10 [211.131 27.59] }}
+         :no-migration {:checkpoints {0 [203.081 22.169] 1 [204.121 22.761] 5 [208.335 25.028] 10 [213.724 27.66] }}
          :lower-fertility {:checkpoints {0 [203.081 22.169] 1 [203.612 22.76] 5 [205.759 24.992] 10 [208.489 27.519] }}
          :faster-aging {:checkpoints {0 [203.081 22.169] 1 [203.867 23.297] 5 [207.054 27.542] 10 [211.131 32.304] }}
          }}
