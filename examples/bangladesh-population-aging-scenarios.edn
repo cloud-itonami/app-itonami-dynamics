@@ -1,0 +1,50 @@
+{:model/id :bangladesh-population-aging
+ :model/as-of "2026-11-24"
+ :model/classification :scenario-not-forecast
+ :model/interpretation "総人口Pと65歳以上Eの2ストック。起点は Population and Housing Census 2022 の列挙人口 (Enumerated, 2022-06-15 census night, 165,158,616人)。P・Eは同一出典表（BBS National Report Vol.1 Table 3.2.8 の年齢別総数から合計）で揃える。出生・死亡率と国際純移民率は同一統計局系列の Bangladesh Sample Vital Statistics 2022 (SVRS) の全国率。基準シナリオは実測の純流出 (-0.600682M/年) を含むため、純移民ゼロ (net-migration 0.0) は別本として :no-migration を定義する。高齢化係数は 2011→2022 の両国勢調査の変化から中点法で導出した実測（11.25年）。老年死亡倍率3.0は既存Tier A/B共通の感度仮定で実測ではない。"
+ :model/observed-evidence
+ {:p2022-census {:value 165.158616 :unit :million :note "165,158,616人 (列挙人口)。基準夜 2022-06-15 (00時)。調整人口 (PEC) 169,828,911人はモデルには使わない (下記参照)" :source "BBS Census 2022 National Report Vol.1 Table 3.2.8/3.2.10"}
+  :age-0-14 {:value 47.242685 :unit :million :note "47,242,685人 (NatVol1 Table 3.2.10 と raw 21階級の 0-4+5-9+10-14 が一致)" :source "BBS Census 2022 National Report Vol.1"}
+  :age-15-64 {:value 108.20863 :unit :million :note "108,208,630人 (Table 3.2.10 の公表値。コードでは総数-0-14-65+で検算し一致)" :source "BBS Census 2022 National Report Vol.1 Table 3.2.10"}
+  :e2022 {:value 9.707301 :unit :million :note "9,707,301人、総人口の5.878%。Prelim Table 2.12 の65+合計 5.89% と四捨五入で一致" :source "BBS Census 2022 National Report Vol.1 Table 3.2.8 (65+ 8階級合計)"}
+  :share-65plus-2022 {:value 5.878 :unit :percent :note "9.707301で計算" :source "computed"}
+  :dependency-2022 {:value 52.63 :unit :per-100 :note "依存人口指数 = (0-14+65+)/15-64 ×100。NatVol1 Table 3.2.10 の公表 52.63 と一致" :source "computed from raw"}
+  :aging-index-2022 {:value 20.548 :unit :per-100 :note "高齢化指数 = 65+/0-14 ×100" :source "computed"}
+  :cbr2022 {:value 19.8 :unit :per-1000 :note "SVRS 2022 (weighted) 全国総数。2023-06 のプレス発表 19.3は発表した沈黙の速報値で最終版に更新済み (SVRS 2023 pocketbook の2022年列も19.8)" :source "BBS Bangladesh Sample Vital Statistics 2022, Key Findings (SVRS)"}
+  :cdr2022 {:value 5.8 :unit :per-1000 :note "SVRS 2022 全国総数。Rate of Natural Increase 1.40% = 19.8-5.8 と一致" :source "same"}
+  :net-migration-2022 {:in-rate-per-1000 2.972 :out-rate-per-1000 6.609 :unit :per-1000 :note "SVRS 2022 Tables 8.7/8.8 の総行 (Key Findings では 3.0/6.6 に丸め)。ネット -3.637/1000 × P0 を :net-migration (-0.600682M/年) に換算 (コードで計算)" :source "BBS SVRS 2022 Chapter 8"}
+  :unmeasured
+  {:net-migration-absolute {:value -0.600682 :unit :million-per-year :note "SVRSは千人率のみ公表し絶対数(M/年)は公表していない。:common の :net-migration は率差 × P0 の導出値で、直接公表された実測ではない" :source "derived (2.972-6.609)/1000 * p0"}
+   :elder-death-multiple {:value 3.0 :unit :multiple :note "Tier A/B共通の感度仮定。BBS公表の実測ではない" :source "assumption (Tier A/B common)"}}
+  :p2011-census {:value 144.043697 :unit :million :note "144,043,697人 (2011-03-15 census)。調整人口 149,772,352人" :source "BBS Census 2022 NatVol1 Table 3.2.1 (2011列) および 2011 Monograph"}
+  :e2011-thousands {:value 6834 :unit :thousand-persons :note "表-5.1 (000単位) の 65-69 (男1150+女964) と 70+ (男2493+女2227) の合計。1000倍して 6,834,000人として使用 (千人丸め ±最大2,000人)" :source "BBS Population Monograph Age-Sex Composition, Table-5.1"}
+  :p2022-adjusted {:value 169.828911 :unit :million :note "調整人口 (PEC)。年齢別調整数は Table 3.1.5 にあるが丸め差 ±1人のためモデル起点には列挙人口を使う" :source "BBS Census 2022 NatVol1 Table 3.1.5"}}
+ :model/source-pins
+ [{:name "BBS Population and Housing Census 2022: National Report (Volume I)" :url "https://objectstorage.ap-dcc-gazipur-1.oraclecloud15.com/n/axvjbnqprylg/b/V2Ministry/o/office-bbs/2024/12/9ce5bd160bb14a1ab1eabe886adddb9a.pdf" :version "Publication Date: November 2023 (Upload: 15-11-2023)" :fetched "2026-11-24T11:38:00Z" :sha256 "1c315d497629a71df9805b0ff7b3debec033a174dbf8418e4b5912326f86eac6" :bytes 10307919 :used-for "Table 3.2.8 (21階級の絶対数)・Table 3.2.10 (0-14/15-64/65+・依存指数52.63)・Table 3.1.5 (列挙/調整人口)・Table 3.2.1 (2011総人口)"}
+  {:name "BBS Population and Housing Census 2022: Preliminary Report (English)" :url "https://objectstorage.ap-dcc-gazipur-1.oraclecloud15.com/n/axvjbnqprylg/b/V2Ministry/o/office-bbs/2024/12/64cfb2e2a63042c9b96acfc276275836.pdf" :version "August 2022" :fetched "2026-11-24T11:38:00Z" :sha256 "d4a36f5b3990fe58ac1eea70dd066a33098142e100c80f36c057b8478fd00e77" :bytes 36965905 :used-for "Table 2.12 (年齢別百分率。65+ 5.89% の照合)"}
+  {:name "BBS Bangladesh Sample Vital Statistics 2022 (SVRS)" :url "https://objectstorage.ap-dcc-gazipur-1.oraclecloud15.com/n/axvjbnqprylg/b/V2Ministry/o/office-bbs/2024/12/940e736ebf414618977fd3d4e7b56e45.pdf" :version "December 2023 (SVRS in Digital Platform Project)" :fetched "2026-11-24T11:39:00Z" :sha256 "0b55ccb6eb7fee48e1f8898270848f12a8ff16d86495249da65e678cfb03d98a" :bytes 11268203 :used-for "Key Findings: CBR 19.8・CDR 5.8・RNI 1.40%。Chapter 8: 国際流入 2.972・流出 6.609 (per 1000)"}
+  {:name "BBS Population Monograph: Age-Sex Composition of Bangladesh Population (Census 2011)" :url "https://objectstorage.ap-dcc-gazipur-1.oraclecloud15.com/n/axvjbnqprylg/b/V2Ministry/o/office-bbs/2026/7/ae96bbdb-a471-47ad-8fa0-41859e1e2871.pdf" :version "BBS Monograph series (Census 2011 based)" :fetched "2026-11-24T11:38:00Z" :sha256 "317ba921dc4ad78e303d75590a9794ff6fd9fa00245cef0aec8099d139ad2bad" :bytes 34831909 :used-for "Table-5.1 (000単位の年齢別男女数)。2011年65+ = 6,834 thousand のみ使用"}]
+ :model/raw-census-persons
+ {:2022 {:total 165158616 :0-4 15580930 :5-9 15328907 :10-14 16332848 :15-19 16567180 :20-24 14993630 :25-29 14380470 :30-34 12121237 :35-39 12719838 :40-44 10040967 :45-49 8265882 :50-54 7785833 :55-59 5731513 :60-64 5602080 :65-69 3927239 :70-74 2831889 :75-79 1227266 :80-84 933210 :85-89 354068 :90-94 277180 :95-99 132907 :100+ 23542}
+  :2011 {:total 144043697}}
+ :model/raw-2011-thousands
+ {:unit "thousand persons (as printed, Table-5.1)"
+  :0-4 {:male 7639 :female 7423} :5-9 {:male 9323 :female 8851} :10-14 {:male 8615 :female 8032} :15-19 {:male 6510 :female 6352} :20-24 {:male 5777 :female 7522} :25-29 {:male 6225 :female 7254} :30-34 {:male 5079 :female 5421} :35-39 {:male 4697 :female 4859} :40-44 {:male 4281 :female 3981} :45-49 {:male 3363 :female 3017} :50-54 {:male 2953 :female 2600} :55-59 {:male 1923 :female 1577} :60-64 {:male 2081 :female 1853} :65-69 {:male 1150 :female 964} :70+ {:male 2493 :female 2227}
+  :male-total 72109 :female-total 71933}
+ :common
+ {:p0 165.158616 :e0 9.707301 :dt 0.05 :sim-years 10
+  :checkpoints-years [0 1 5 10]
+  :birth-rate 0.0198 :death-rate 0.0058 :net-migration -0.600682
+  :aging-coef 0.00272885 :elder-death-multiple 3.0}
+ :scenarios
+ {:baseline-2022-rates
+  {:label "2022年実測率固定 (出生19.8‰・死亡5.8‰・純流出-0.601M/年・高齢化係数は2011-2022実測)"}
+  :no-migration
+  {:label "純移民ゼロ (感度・net-migration 0.0。基準と異なる別本)"
+   :net-migration 0.0}
+  :lower-fertility
+  {:label "出生1割減 (感度)"
+   :birth-rate 0.01782}
+  :faster-aging
+  {:label "高齢化加速 (係数×1.5、感度)"
+   :aging-coef 0.00409328}}}
