@@ -1,4 +1,4 @@
-;; One-time measurement oracle for AWAI-3359 (2026-11-22).
+;; One-time measurement oracle for AWAI-3359 (2026-11-24; pure zero-migration added).
 ;;
 ;; Run from the repo root:
 ;;   basilisp run oracle/brazil_population_oracle_run.cljc > examples/generated/brazil-population-aging-results.edn
@@ -44,10 +44,11 @@
    :aging-coef 0.00602303 :elder-death-multiple 3.0})
 
 (def scenario-order
-  ["baseline-2022-rates" "lower-fertility" "faster-aging"])
+  ["baseline-2022-rates" "no-migration" "lower-fertility" "faster-aging"])
 
 (def scenarios
   {"baseline-2022-rates" {}
+   "no-migration" {:net-migration 0.0}
    "lower-fertility" {:birth-rate 0.01126679}
    "faster-aging" {:aging-coef 0.00903455}})
 
@@ -114,7 +115,7 @@
 
 (defn- emit [results]
   (str "#:model{:id :brazil-population-aging,\n"
-       "        :as-of \"2026-11-22\",\n"
+       "        :as-of \"2026-11-24\",\n"
        "        :interpretation\n"
        "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
        "Base year is the measured Censo Demográfico 2022 (Segunda Apuração, 2022-08-01): "
@@ -122,8 +123,11 @@
        "Estatísticas do Registro Civil occurred counts; net migration is the 2022 STI "
        "saldo (-252,799/yr) from IBGE Projeções Revisão 2024; the aging coefficient is "
        "derived from the 2010->2022 census change (midpoint method, elder multiple 3.0 "
-       "assumed, same as Tier A/B). Year-1 checked for directional/magnitude consistency "
-       "only (reconciled projection levels sit +3.8% above census and are not matched).\",\n"
+       "assumed, same as Tier A/B). Required scenarios: baseline-2022-rates, "
+       "no-migration (pure zero migration, net-migration 0.0), lower-fertility; "
+       "faster-aging is an additional sensitivity. Year-1 checked for "
+       "directional/magnitude consistency only (reconciled projection levels sit "
+       "+3.8% above census and are not matched).\",\n"
        "        :oracle {:script \"oracle/brazil_population_oracle_run.cljc (one-time oracle, not CI/gate)\",\n"
        "                 :runtime \"basilisp, macOS arm64\",\n"
        "                 :source-edn \"examples/brazil-population-aging-scenarios.edn (mirror asserted by grep before run)\"},\n"
@@ -153,17 +157,22 @@
       (when-not (and (<= 190.0 pv 220.0) (<= 20.0 ev 35.0) (<= ev pv))
         (throw (ex-info "bounds broken" {:scenario n :cp cp})))))
   ;; year-1: 人口+0.79M (調整人口の年増+0.83Mと同程度)、65+ +0.59M/年 (10年平均+0.67M/年)
+  ;; zero-migration is 0.2528M/yr above baseline (baseline net-migration -0.2528).
   (let [p1 (first (get-in results ["baseline-2022-rates" 1]))
-        e1 (second (get-in results ["baseline-2022-rates" 1]))]
+        e1 (second (get-in results ["baseline-2022-rates" 1]))
+        p0m (first (get-in results ["no-migration" 1]))]
     (when-not (and (< (abs (- p1 203.867)) 0.05)
-                   (< (abs (- e1 22.760)) 0.05))
-      (throw (ex-info "year-1 validation failed" {:p1 p1 :e1 e1}))))
+                   (< (abs (- e1 22.760)) 0.05)
+                   (< (abs (- p0m 204.120)) 0.05))
+      (throw (ex-info "year-1 validation failed" {:p1 p1 :e1 e1 :p1-zero-migration p0m}))))
   (let [pb (first (get-in results ["baseline-2022-rates" 10]))
+        pz (first (get-in results ["no-migration" 10]))
         pl (first (get-in results ["lower-fertility" 10]))
         sb (/ (second (get-in results ["baseline-2022-rates" 10]))
               (first (get-in results ["baseline-2022-rates" 10])))
         sf (/ (second (get-in results ["faster-aging" 10]))
               (first (get-in results ["faster-aging" 10])))]
-    (when-not (and (> pb pl) (> sb 0.109) (> sf sb))
-      (throw (ex-info "ordering broken" {:baseline-p pb :lower-fert-p pl}))))
+    (when-not (and (> pb pl) (> pz pb) (< (abs (- (- pz pb) 2.593)) 0.05)
+                   (> sb 0.109) (> sf sb))
+      (throw (ex-info "ordering broken" {:baseline-p pb :zero-migration-p pz :lower-fert-p pl}))))
   (print (emit results)))

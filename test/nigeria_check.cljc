@@ -23,6 +23,13 @@
 (def scenarios (read-edn "examples/nigeria-population-aging-scenarios.edn"))
 (def published (read-edn "examples/generated/nigeria-population-aging-results.edn"))
 (def c (:common scenarios))
+
+;; Minimal scenario-composition guard for AWAI-3358 note: the baseline doubles
+;; as the required pure zero-migration scenario (net-migration 0.0 inherited).
+(check! :baseline-is-zero-migration
+        (and (== (:net-migration c) 0.0)
+             (nil? (:net-migration (get (:scenarios scenarios) :baseline-2022-rates))))
+        "baseline inherits net-migration 0.0, doubling as the required zero-migration scenario")
 (def raw22 (get-in scenarios [:model/raw-annex3-persons :2022]))
 (def raw21 (get-in scenarios [:model/raw-annex3-persons :2021]))
 

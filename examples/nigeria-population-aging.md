@@ -3,7 +3,8 @@
 分類: シナリオであって予測ではない。総人口・65歳以上・出生率・死亡率は
 同一出典系列 (全て National Population Commission 2022年推計、NBS
 Demographic Statistics Bulletin 2022 経由) で揃える。純移民は未公表のため
-ゼロ仮定 (残差 ~0.010M/年で正当化)。高齢死亡倍率3.0は既存Tier A/B共通の
+ゼロ仮定 (残差 ~0.010M/年で正当化)。したがって必須シナリオの「純移民ゼロ」は
+基準シナリオ (`baseline-2022-rates`, net-migration 0.0) が兼ねる (AWAI-3358注記)。高齢死亡倍率3.0は既存Tier A/B共通の
 感度仮定で実測ではない。2006年以来の国勢調査は実施されていないため、
 「実測」はNPCの2006センサス起点コーホート推計系列を指す。
 
@@ -94,8 +95,9 @@ bb test/nigeria_check.cljc
 - `aging-coef-derived`: 格納値と導出値の差 < 1e-8
 - `results-reproduced`: Tier Bエンジンで3シナリオ×4チェックポイントが再現
 - `net-migration-zero-justified`: 残差 10,126人/年 (人口の0.005%)
+- `baseline-is-zero-migration`: 基準が net-migration 0.0 を継承し純移民ゼロを兼ねる
 - ネガティブコントロール: 係数改変の検出、e0捏造の検出、rank/score不在
-- 合計 14 checks、0 failures
+- 合計 15 checks、0 failures
 
 既存検査 (Tier Bエンジン再現チェックにナイジェリアが加わり、
 Tier A/B比較に NGA として追加):

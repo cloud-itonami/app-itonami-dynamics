@@ -26,6 +26,22 @@
 (def scenarios (read-edn "examples/brazil-population-aging-scenarios.edn"))
 (def published (read-edn "examples/generated/brazil-population-aging-results.edn"))
 (def c (:common scenarios))
+
+;; ---- 0. required scenarios (AWAI-3359 必須3シナリオ: 基準 / 純移民ゼロ / 出生率変化) ----
+;; faster-aging は追加の感度として残す (計4シナリオ)。
+(check! :required-scenarios-present
+        (let [ids (set (keys (:scenarios scenarios)))]
+          (and (contains? ids :baseline-2022-rates)
+               (contains? ids :no-migration)
+               (contains? ids :lower-fertility)))
+        (str "scenarios " (sort (map name (keys (:scenarios scenarios))))))
+(check! :no-migration-is-zero
+        (let [sc (get (:scenarios scenarios) :no-migration)]
+          (and (some? sc)
+               (= (:net-migration sc) 0.0)
+               (nil? (:birth-rate sc))
+               (nil? (:aging-coef sc))))
+        "no-migration overrides net-migration to 0.0 only, inherits birth/aging from common")
 (def raw22 (get-in scenarios [:model/raw-census-persons :2022]))
 (def raw10 (get-in scenarios [:model/raw-census-persons :2010]))
 
@@ -107,20 +123,23 @@
         :when (not= (get engine-scenarios sid) want)]
     {:scenario sid :got (get engine-scenarios sid) :want want}))
 (check! :results-reproduced (empty? mismatches)
-        (if (empty? mismatches) "all 3 scenarios x 4 checkpoints equal"
+        (if (empty? mismatches) "all 4 scenarios x 4 checkpoints equal"
             (str "mismatches " (pr-str mismatches))))
 (doseq [[sid traj] engine-scenarios]
   (println (str sid "\t" (pr-str traj))))
 (check! :bounds-and-ordering
         (let [base (get-in engine-scenarios ["baseline-2022-rates" 10])
+              zero (get-in engine-scenarios ["no-migration" 10])
               low (get-in engine-scenarios ["lower-fertility" 10])
               fast (get-in engine-scenarios ["faster-aging" 10])
               share (/ (second base) (first base))]
           (and (> (first base) (first low))
+               (> (first zero) (first base))
+               (< (Math/abs (- (- (first zero) (first base)) 2.593)) 0.05)
                (> share (/ 22.169101 203.080756))
                (> (second fast) (second base))
                (<= (second base) (first base))))
-        "baseline P10 > lower-fertility P10, faster-aging E10 > baseline, 65+ share rises")
+        "baseline P10 > lower-fertility P10, zero-migration P10 > baseline P10 by ~2.593M (0.2528M/yr x 10yr, compounded), faster-aging E10 > baseline, 65+ share rises")
 
 ;; ---- 5. negative controls ----------------------------------------------------
 (check! :negative-tampered-aging-detected

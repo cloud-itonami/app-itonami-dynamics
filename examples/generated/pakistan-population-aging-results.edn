@@ -1,0 +1,60 @@
+#:model{:id :pakistan-population-aging,
+        :as-of "2026-11-24",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Base year is the PBS 7th Census 2023 detailed population (Table 5): 240,458,089 persons, 8,531,184 aged 65+ (3.55%). The headline 241,499,431 includes 1,041,342 head-count-only persons with no age detail. Birth/death rates are PBS PDS-2020 (reference 2020: CBR 27/1000, CDR 6.7/1000) because Census 2023 publishes no vital counts; the baseline net-migration is the UN WPP 2024 PAK netm2023 -1.619557 M/yr (derived, not measured, via Tier B inputs); the zero-migration scenario no-migration (net 0.0) is a separate assumption (PBS publishes no national net-migration rate; intercensal residual +0.91M/yr is contaminated by census coverage change and is not used). The aging coefficient is derived from the 2017->2023 census change (6-year midpoint, elder multiple 3.0 assumed, same as Tier A/B). Year-1 checked for directional/magnitude consistency only.",
+        :oracle {:script "oracle/pakistan_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/pakistan-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2023-rates {:checkpoints {0 [240.458 8.531] 1 [243.751 8.682] 5 [257.614 9.3] 10 [276.602 10.11] }}
+         :no-migration {:checkpoints {0 [240.458 8.531] 1 [245.387 8.683] 5 [266.133 9.328] 10 [294.548 10.222] }}
+         :lower-fertility {:checkpoints {0 [240.458 8.531] 1 [243.093 8.682] 5 [254.106 9.289] 10 [269.009 10.063] }}
+         :faster-aging {:checkpoints {0 [240.458 8.531] 1 [243.751 8.842] 5 [257.614 10.089] 10 [276.602 11.661] }}
+         }}
+#:model{:id :pakistan-population-aging,
+        :as-of "2026-11-24",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Base year is the PBS 7th Census 2023 detailed population (Table 5): 240,458,089 persons, 8,531,184 aged 65+ (3.55%). The headline 241,499,431 includes 1,041,342 head-count-only persons with no age detail. Birth/death rates are PBS PDS-2020 (reference 2020: CBR 27/1000, CDR 6.7/1000) because Census 2023 publishes no vital counts; the baseline net-migration is the UN WPP 2024 PAK netm2023 -1.619557 M/yr (derived, not measured, via Tier B inputs); the zero-migration scenario no-migration (net 0.0) is a separate assumption (PBS publishes no national net-migration rate; intercensal residual +0.91M/yr is contaminated by census coverage change and is not used). The aging coefficient is derived from the 2017->2023 census change (6-year midpoint, elder multiple 3.0 assumed, same as Tier A/B). Year-1 checked for directional/magnitude consistency only.",
+        :oracle {:script "oracle/pakistan_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/pakistan-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2023-rates {:checkpoints {0 [240.458 8.531] 1 [243.751 8.682] 5 [257.614 9.3] 10 [276.602 10.11] }}
+         :no-migration {:checkpoints {0 [240.458 8.531] 1 [245.387 8.683] 5 [266.133 9.328] 10 [294.548 10.222] }}
+         :lower-fertility {:checkpoints {0 [240.458 8.531] 1 [243.093 8.682] 5 [254.106 9.289] 10 [269.009 10.063] }}
+         :faster-aging {:checkpoints {0 [240.458 8.531] 1 [243.751 8.842] 5 [257.614 10.089] 10 [276.602 11.661] }}
+         }}
+#:model{:id :pakistan-population-aging,
+        :as-of "2026-11-24",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Base year is the PBS 7th Census 2023 detailed population (Table 5): 240,458,089 persons, 8,531,184 aged 65+ (3.55%). The headline 241,499,431 includes 1,041,342 head-count-only persons with no age detail. Birth/death rates are PBS PDS-2020 (reference 2020: CBR 27/1000, CDR 6.7/1000) because Census 2023 publishes no vital counts; the baseline net-migration is the UN WPP 2024 PAK netm2023 -1.619557 M/yr (derived, not measured, via Tier B inputs); the zero-migration scenario no-migration (net 0.0) is a separate assumption (PBS publishes no national net-migration rate; intercensal residual +0.91M/yr is contaminated by census coverage change and is not used). The aging coefficient is derived from the 2017->2023 census change (6-year midpoint, elder multiple 3.0 assumed, same as Tier A/B). Year-1 checked for directional/magnitude consistency only.",
+        :oracle {:script "oracle/pakistan_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/pakistan-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2023-rates {:checkpoints {0 [240.458 8.531] 1 [243.751 8.682] 5 [257.614 9.3] 10 [276.602 10.11] }}
+         :no-migration {:checkpoints {0 [240.458 8.531] 1 [245.387 8.683] 5 [266.133 9.328] 10 [294.548 10.222] }}
+         :lower-fertility {:checkpoints {0 [240.458 8.531] 1 [243.093 8.682] 5 [254.106 9.289] 10 [269.009 10.063] }}
+         :faster-aging {:checkpoints {0 [240.458 8.531] 1 [243.751 8.842] 5 [257.614 10.089] 10 [276.602 11.661] }}
+         }}
+#:model{:id :pakistan-population-aging,
+        :as-of "2026-11-24",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Base year is the PBS 7th Census 2023 detailed population (Table 5): 240,458,089 persons, 8,531,184 aged 65+ (3.55%). The headline 241,499,431 includes 1,041,342 head-count-only persons with no age detail. Birth/death rates are PBS PDS-2020 (reference 2020: CBR 27/1000, CDR 6.7/1000) because Census 2023 publishes no vital counts; the baseline net-migration is the UN WPP 2024 PAK netm2023 -1.619557 M/yr (derived, not measured, via Tier B inputs); the zero-migration scenario no-migration (net 0.0) is a separate assumption (PBS publishes no national net-migration rate; intercensal residual +0.91M/yr is contaminated by census coverage change and is not used). The aging coefficient is derived from the 2017->2023 census change (6-year midpoint, elder multiple 3.0 assumed, same as Tier A/B). Year-1 checked for directional/magnitude consistency only.",
+        :oracle {:script "oracle/pakistan_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/pakistan-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2023-rates {:checkpoints {0 [240.458 8.531] 1 [243.751 8.682] 5 [257.614 9.3] 10 [276.602 10.11] }}
+         :no-migration {:checkpoints {0 [240.458 8.531] 1 [245.387 8.683] 5 [266.133 9.328] 10 [294.548 10.222] }}
+         :lower-fertility {:checkpoints {0 [240.458 8.531] 1 [243.093 8.682] 5 [254.106 9.289] 10 [269.009 10.063] }}
+         :faster-aging {:checkpoints {0 [240.458 8.531] 1 [243.751 8.842] 5 [257.614 10.089] 10 [276.602 11.661] }}
+         }}
