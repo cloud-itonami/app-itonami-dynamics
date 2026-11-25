@@ -75,7 +75,7 @@
 ;; definitions, sources and one to two years of change.
 (def iso-of {"australia" "AUS" "canada" "CAN" "china" "CHN" "france" "FRA" "germany" "DEU" "indonesia" "IDN"
              "italy" "ITA" "japan" "JPN" "korea" "KOR" "netherlands" "NLD" "singapore" "SGP" "sweden" "SWE"
-             "taiwan" "TWN" "thailand" "THA" "uk" "GBR" "us" "USA" "vietnam" "VNM" "nigeria" "NGA" "brazil" "BRA"})
+             "taiwan" "TWN" "thailand" "THA" "uk" "GBR" "us" "USA" "vietnam" "VNM" "nigeria" "NGA" "brazil" "BRA" "pakistan" "PAK"})
 (def eu27 ["AUT" "BEL" "BGR" "HRV" "CYP" "CZE" "DNK" "EST" "FIN" "FRA" "DEU" "GRC" "HUN" "IRL" "ITA" "LVA" "LTU"
            "LUX" "MLT" "NLD" "POL" "PRT" "ROU" "SVK" "SVN" "ESP" "SWE"])
 (defn tier-b-of [id]
@@ -99,7 +99,7 @@
                   "\tE " (format "%.3f" e) " vs " (format "%.3f" (:e tier-b))
                   (format " (%+.1f%%)" (* 100 (/ (- e (:e tier-b)) (:e tier-b))))))
     (println (str "TIER-A-VS-B\t" id "\tno Tier B counterpart (subnational)"))))
-(check! :tier-a-comparison-listed (= 20 (count (filter :tier-b comparisons)))
+(check! :tier-a-comparison-listed (= 21 (count (filter :tier-b comparisons)))
         (str (count (filter :tier-b comparisons)) " Tier A population models compared with Tier B"))
 
 ;; ---- 5. boundaries -------------------------------------------------------------------
