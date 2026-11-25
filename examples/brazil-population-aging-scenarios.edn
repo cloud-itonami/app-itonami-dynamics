@@ -1,5 +1,5 @@
 {:model/id :brazil-population-aging
- :model/as-of "2026-11-22"
+ :model/as-of "2026-11-24"
  :model/classification :scenario-not-forecast
  :model/interpretation "総人口Pと65歳以上Eの2ストック。起点はCenso Demográfico 2022 (Segunda Apuração, 2022-08-01基準) の実測。出生・死亡率はEstatísticas do Registro Civil 2022 (発生年ベース)。純移民はIBGE Projeções Revisão 2024のSTIベース saldo (2022)。高齢化係数は2010→2022の両国勢調査の変化から中点法で導出した実測。60歳以上 (老人保健福祉) とは定義が違う (65歳以上で統一)。"
  :model/observed-evidence
@@ -42,6 +42,9 @@
  :scenarios
  {:baseline-2022-rates
   {:label "2022年実測率固定 (出生12.52‰・死亡7.41‰・純移入-0.253M/年・高齢化係数は2010-2022実測)"}
+  :no-migration
+  {:label "純移民ゼロ (必須シナリオ。net-migration 0.0、出生・高齢化係数は基準と同一、感度)"
+   :net-migration 0.0}
   :lower-fertility
   {:label "出生1割減 (感度)"
    :birth-rate 0.01126679}

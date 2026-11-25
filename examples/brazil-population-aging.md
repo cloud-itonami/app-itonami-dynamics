@@ -7,6 +7,10 @@
 高齢死亡倍率 3.0 は Tier A/B 共通の仮定。60歳以上 15.6% とは定義が
 違う (65歳以上で統一)。
 
+必須シナリオは3本: 基準 (`baseline-2022-rates`) / 純移民ゼロ
+(`no-migration`、基準に対し net-migration = 0.0) / 出生率変化
+(`lower-fertility`)。`faster-aging` は追加の感度として残し、計4本。
+
 ## 実測起点 (Censo 2022 + Registro Civil 2022、同一系列)
 
 - 実測 (人単位、oracle が整数で assert): 総人口 203,080,756。
@@ -43,8 +47,14 @@ m=-0.252799、a=0.00602、me=3.0。初年は人口 +0.79M (調整人口の
 | シナリオ | 総人口 | 65歳以上 | 高齢化率 |
 |---|---|---|---|
 | 2022年率固定 | 211.13 | 27.59 | 13.1% |
+| 純移民ゼロ (必須) | 213.72 | 27.66 | 12.9% |
 | 出生1割減 | 208.49 | 27.52 | 13.2% |
 | 高齢化加速 | 211.13 | 32.30 | 15.3% |
+
+純移民ゼロは基準の net-migration (-0.252799M/年) を 0.0 に置き換え、
+出生 (12.52‰)・死亡 (7.41‰)・高齢化係数 (0.00602) は基準と同一。
+10年後は基準より総人口 +2.59M (0.2528M/年×10年、複利込み)、
+65歳以上ほぼ同等 (27.66 vs 27.59) で高齢化率はむしろ低い (12.9% vs 13.1%)。
 
 出生の差は総人口に 2.6M 効き、高齢化率は出生より係数で決まる。
 faster-aging の係数 (0.00903) は直近1年 (0.00744) も超える感度。
@@ -78,14 +88,16 @@ basilisp run oracle/brazil_population_oracle_run.cljc \
   > examples/generated/brazil-population-aging-results.edn
 ```
 
-basilisp と babashka で小数第3位まで一致を確認すること。
+basilisp と babashka で小数第3位まで一致を確認済み (2026-11-24、実測):
+Basilisp 0.5.1 と babashka 1.12.218 の両実行で byte-identical
+(sha256 `222340d831ae1892b7c37ebf8cfe603f6f4122faa77878acb0f60ca6849ab57b`)。
 `.cljc` では loop 変数と係数束縛の同名シャドウを避け、
 シナリオ名は定義と照合の全箇所で統一すること (AWAI-2811/2819の教訓)。
 
 ## 検証 (bb, clojure -M 不使用)
 
 ```
-bb test/brazil_check.cljc      # 18 checks, 0 failures
+bb test/brazil_check.cljc      # 20 checks, 0 failures
 bb test/tier_b_check.cljc      # 12 PASS, 0 FAIL (BRA登録済、比較数 20)
 bb test/examples_edn_check.cljc # 56 EDN files, 0 failures
 ```
@@ -94,9 +106,13 @@ bb test/examples_edn_check.cljc # 56 EDN files, 0 failures
   総人口 = 年齢階級合計 (相対偏差 0.0、整数完全一致) を assert。
   :age-15-64 は computed-residual のため、公式の 0-14・65+ 絶対数から
   独立に引き直して EDN 記載値 (140,782,394) と一致を検証。
-  公開済み oracle 結果を Tier B エンジンで再現 (3シナリオ×4cp 一致)。
+  必須3シナリオ (基準 / 純移民ゼロ / 出生率変化) の存在と、純移民ゼロが
+  net-migration 0.0 上書きのみであることを検証。
+  公開済み oracle 結果を Tier B エンジンで再現 (4シナリオ×4cp 一致)。
   負テスト: 改ざん係数検出、forged e0 検出、rank/score なし。
 - Tier A/B 比較 (未調停): ブラジル P 203.081 vs WPP 211.141 (−3.8%)、
   E 22.169 vs 22.452 (−1.3%)。水準差は推計の構成と年差・系列差。
 
 PR: https://github.com/cloud-itonami/app-itonami-dynamics/pull/39
+
+純移民ゼロ追加 (AWAI-3359 fix + AWAI-3358 注記): https://github.com/cloud-itonami/app-itonami-dynamics/pull/40
