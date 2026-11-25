@@ -1,0 +1,15 @@
+#:model{:id :bangladesh-population-aging,
+        :as-of "2026-11-24",
+        :interpretation
+        "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Base year is the enumerated Population and Housing Census 2022 (census night 2022-06-15): 165,158,616 persons, 9,707,301 aged 65+ (5.88%). Birth/death rates are SVRS 2022 national CBR 19.8 / CDR 5.8 per 1000 (BBS, weighted final); net migration is the SVRS 2022 international net rate (2.972 - 6.609 per 1000, times P0 = -0.600682M/yr); the aging coefficient is derived from the 2011->2022 census change (midpoint method over 11.25yr, elder multiple 3.0 assumed, same as Tier A/B; 2011 65+ is thousands-rounded). The PEC-adjusted population (169.83M) and the SVRS 1-July estimate are not used as the base (enumerated census count). Year-1 checked for directional/magnitude consistency only.",
+        :oracle {:script "oracle/bangladesh_population_oracle_run.cljc (one-time oracle, not CI/gate)",
+                 :runtime "basilisp, macOS arm64",
+                 :source-edn "examples/bangladesh-population-aging-scenarios.edn (mirror asserted by grep before run)"},
+        :checkpoints-years [0 1 5 10],
+        :scenarios
+        {
+         :baseline-2022-rates {:checkpoints {0 [165.159 9.707] 1 [166.882 9.962] 5 [174.02 10.979] 10 [183.523 12.249] }}
+         :no-migration {:checkpoints {0 [165.159 9.707] 1 [167.486 9.963] 5 [177.13 11.0] 10 [189.968 12.329] }}
+         :lower-fertility {:checkpoints {0 [165.159 9.707] 1 [166.551 9.962] 5 [172.291 10.968] 10 [179.866 12.204] }}
+         :faster-aging {:checkpoints {0 [165.159 9.707] 1 [166.882 10.173] 5 [174.02 12.01] 10 [183.523 14.256] }}
+         }}
