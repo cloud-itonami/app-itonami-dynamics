@@ -67,6 +67,7 @@
 (defn- emit [results]
   (str "#:model{:id :netherlands-population-aging,\n"
        "        :as-of \"2026-11-12\",\n"
+       "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
        "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
        "Birth/death counts and total are CBS-2024 actuals; elderly share is "

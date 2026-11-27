@@ -1,0 +1,537 @@
+(ns dynamics.provenance
+  "Fail-closed provenance labeling for measured/observed parameters vs
+   coefficient-free scenario assumptions (AWAI-2800 / AWAI-2838, NEG-2838-04).
+
+   Rule: `AWAI-2838 / coefficient-free-scenario-label`
+         (`coefficient-free-zone-never-presented-as-measured`)
+   Failure mode: `scenario-assumption-reported-as-observed-parameter`
+   Fail-closed action: `output-relabeled-scenario-pending-data`
+   Minimal verification: `assert-measured-vs-scenario-tag-per-output`
+
+   Design principle (portable Clojure / ClojureScript / Babashka / nbb):
+   - Zero network I/O, zero host interop, zero personal data (no PII).
+   - A parameter or output may carry `:measured` or `:observed` ONLY when it
+     has dated, non-placeholder empirical provenance (`:source` + `:as-of`),
+     carries no scenario/assumption/estimate/unmeasured flags, and (when input
+     `:parameters`/`:inputs` are attached) every contributing parameter is
+     itself empirically measured.
+   - Any coefficient-free zone or scenario assumption claiming `:measured` /
+     `:observed` -- or any output omitting its provenance tag -- fails closed:
+     `enforce-output-provenance` relabels it to `:scenario-pending-data` with
+     machine-readable audit metadata, and `validate-output-provenance!` /
+     `assert-measured-vs-scenario-tag-per-output!` rejects it."
+  (:require [clojure.string :as str]))
+
+(def rule-id
+  :AWAI-2838/coefficient-free-scenario-label)
+
+(def pending-data-tag
+  :scenario-pending-data)
+
+(def measured-tags
+  #{:measured :observed})
+
+(def scenario-tags
+  #{:scenario
+    :scenario-assumption
+    :scenario-not-forecast
+    :scenario-pending-data
+    :unmeasured})
+
+(def valid-output-tags
+  #{:measured
+    :observed
+    :scenario
+    :scenario-assumption
+    :scenario-not-forecast
+    :scenario-pending-data})
+
+(def ^:private non-measured-statuses
+  #{:unmeasured
+    :unobserved
+    :unidentifiable
+    :assumed
+    :derived
+    :held-constant
+    :scenario
+    :scenario-assumption
+    :scenario-not-forecast
+    :scenario-pending-data})
+
+(def ^:private unmeasured-values
+  #{:unmeasured
+    :unobserved
+    :unidentifiable
+    :uncomputable-until-measured})
+
+(def ^:private non-empirical-source-tokens
+  #{"assumption" "assumed" "scenario" "scenario-assumption"
+    "scenario-not-forecast" "scenario-pending-data"
+    "unmeasured" "unmeasured-assumption" "unobserved" "unidentifiable"
+    "estimate" "estimated" "placeholder" "fabricated" "synthetic"
+    "tbd" "todo" "unknown" "none" "n/a" "pending" "pending-data"})
+
+(def ^:private non-empirical-source-prefixes
+  ["assumption" "assumed" "unmeasured" "unobserved" "scenario"
+   "placeholder" "pending" "tbd" "todo"])
+
+(defn- finite-year-or-number? [x]
+  (and (number? x) (== x x) (< -1e9 x 1e9)))
+
+(defn empirical-source?
+  "True iff `source` is a non-blank string naming an empirical source rather
+   than an assumption/scenario/unmeasured placeholder."
+  [source]
+  (and (string? source)
+       (let [trimmed (str/trim source)
+             lower (str/lower-case trimmed)]
+         (and (not (str/blank? trimmed))
+              (not (contains? non-empirical-source-tokens lower))
+              (not (some #(str/starts-with? lower %) non-empirical-source-prefixes))))))
+
+(defn valid-as-of?
+  "True iff `as-of` is a non-blank date/period string (not a placeholder) or a
+   finite numeric year."
+  [as-of]
+  (or (finite-year-or-number? as-of)
+      (and (string? as-of)
+           (let [trimmed (str/trim as-of)
+                 lower (str/lower-case trimmed)]
+             (and (not (str/blank? trimmed))
+                  (not (contains? non-empirical-source-tokens lower)))))))
+
+(defn extract-claimed-tag
+  "Extract the provenance tag claimed by `entry`, checking canonical tag keys
+   in priority order and falling back to boolean `:observed?`/`:measured?` flags."
+  [entry]
+  (when (map? entry)
+    (or (:provenance/tag entry)
+        (:provenance entry)
+        (:tag entry)
+        (:classification entry)
+        (:model/classification entry)
+        (:archetype/classification entry)
+        (when (:observed? entry) :observed)
+        (when (:measured? entry) :measured))))
+
+(defn- explicit-tag-without-booleans [entry]
+  (when (map? entry)
+    (or (:provenance/tag entry)
+        (:provenance entry)
+        (:tag entry)
+        (:classification entry)
+        (:model/classification entry)
+        (:archetype/classification entry))))
+
+(defn- assumption-flags [entry]
+  (when (map? entry)
+    (cond-> []
+      (:scenario? entry) (conj :flagged-scenario)
+      (:assumption? entry) (conj :flagged-assumption)
+      (:estimate? entry) (conj :flagged-estimate)
+      (:coefficient-free? entry) (conj :flagged-coefficient-free)
+      (:unmeasured? entry) (conj :flagged-unmeasured)
+      (contains? non-measured-statuses (:status entry)) (conj :non-measured-status)
+      (contains? unmeasured-values (:value entry)) (conj :unmeasured-value)
+      (seq (:assumptions-retained entry)) (conj :retained-assumptions)
+      (contains? #{:unmeasured-assumption :assumption :scenario :unmeasured :unobserved}
+                 (:source entry))
+      (conj :non-empirical-source))))
+
+(declare measured-provenance-failures)
+
+(defn- parameter-entries [entry]
+  (let [params (or (:parameters entry) (:inputs entry))]
+    (cond
+      (map? params) (vals params)
+      (sequential? params) params
+      :else nil)))
+
+(defn- param-measured-ok? [p]
+  (cond
+    (contains? unmeasured-values p) false
+    (contains? scenario-tags p) false
+    (map? p)
+    (let [tag (extract-claimed-tag p)]
+      (and (not (contains? scenario-tags tag))
+           (empty? (measured-provenance-failures p))))
+    :else false))
+
+(defn measured-provenance-failures
+  "Return a vector of concrete reasons why `entry` cannot be presented as
+   `:measured` / `:observed`. Empty vector means empirical provenance is valid."
+  [entry]
+  (if-not (map? entry)
+    [:not-a-map]
+    (let [src (or (:source entry) (get-in entry [:measured-provenance :source]))
+          as-of (or (:as-of entry)
+                    (:model/as-of entry)
+                    (get-in entry [:measured-provenance :as-of]))
+          flags (assumption-flags entry)
+          params (parameter-entries entry)
+          bad-params? (and (seq params) (not (every? param-measured-ok? params)))]
+      (vec
+       (distinct
+        (cond-> (vec flags)
+          (not (empirical-source? src)) (conj :missing-empirical-source)
+          (not (valid-as-of? as-of)) (conj :missing-as-of-date)
+          bad-params? (conj :contains-unmeasured-or-scenario-parameter)))))))
+
+(defn has-measured-provenance?
+  "True iff `entry` carries dated empirical provenance, has no scenario or
+   coefficient-free flags, and (if input parameters are supplied) every input
+   parameter is itself empirically measured."
+  [entry]
+  (and (map? entry)
+       (empty? (measured-provenance-failures entry))))
+
+(defn coefficient-free-zone?
+  "True iff `entry` falls in a coefficient-free or assumption-bearing zone and
+   therefore must NEVER be presented as `:measured` or `:observed`."
+  [entry]
+  (not (has-measured-provenance? entry)))
+
+(defn- relabel-measured-keys [entry]
+  (cond-> (assoc entry :provenance/tag pending-data-tag)
+    (contains? entry :provenance)
+    (assoc :provenance pending-data-tag)
+    (and (contains? entry :tag) (contains? measured-tags (:tag entry)))
+    (assoc :tag pending-data-tag)
+    (and (contains? entry :classification) (contains? measured-tags (:classification entry)))
+    (assoc :classification pending-data-tag)
+    (and (contains? entry :model/classification)
+         (contains? measured-tags (:model/classification entry)))
+    (assoc :model/classification pending-data-tag)
+    (and (contains? entry :archetype/classification)
+         (contains? measured-tags (:archetype/classification entry)))
+    (assoc :archetype/classification pending-data-tag)
+    (contains? entry :measured?)
+    (assoc :measured? false)
+    (contains? entry :observed?)
+    (assoc :observed? false)))
+
+(defn enforce-output-provenance
+  "Enforce `AWAI-2838 / coefficient-free-scenario-label` on a single output or
+   parameter map (fail-closed relabel mode).
+
+   - Verified `:measured` / `:observed` outputs (backed by valid empirical
+     provenance) retain their tag with `:provenance/relabeled? false`.
+   - Verified scenario outputs (`:scenario`, `:scenario-assumption`,
+     `:scenario-not-forecast`, `:scenario-pending-data`) retain their tag with
+     `:provenance/relabeled? false` (unless contradicted by `:measured? true` /
+     `:observed? true`).
+   - Any coefficient-free or scenario assumption claiming `:measured` /
+     `:observed` -- or any untagged / invalidly tagged output -- fails closed
+     and is relabeled to `:scenario-pending-data` with `:provenance/relabeled? true`
+     and machine-readable audit fields."
+  [output]
+  (let [entry (if (map? output) output {:value output})
+        explicit-tag (explicit-tag-without-booleans entry)
+        bool-measured? (boolean (or (:measured? entry) (:observed? entry)))
+        claimed-tag (extract-claimed-tag entry)
+        contradiction? (and bool-measured? (contains? scenario-tags explicit-tag))
+        claims-measured? (or (contains? measured-tags claimed-tag) bool-measured?)]
+    (cond
+      (and (nil? explicit-tag) (not bool-measured?))
+      (-> (relabel-measured-keys entry)
+          (assoc :provenance/status :relabeled-fail-closed
+                 :provenance/relabeled? true
+                 :provenance/rule rule-id
+                 :provenance/failure-mode :missing-provenance-tag
+                 :provenance/fail-closed-action :output-relabeled-scenario-pending-data
+                 :provenance/prior-claim nil
+                 :provenance/reasons (vec (distinct (conj (measured-provenance-failures entry)
+                                                          :missing-provenance-tag)))))
+
+      claims-measured?
+      (let [reasons (cond-> (measured-provenance-failures entry)
+                      contradiction? (conj :contradictory-measured-claim))
+            reasons (vec (distinct reasons))]
+        (if (empty? reasons)
+          (assoc entry
+                 :provenance/tag claimed-tag
+                 :provenance/status :verified
+                 :provenance/relabeled? false
+                 :provenance/rule rule-id)
+          (-> (relabel-measured-keys entry)
+              (assoc :provenance/status :relabeled-fail-closed
+                     :provenance/relabeled? true
+                     :provenance/rule rule-id
+                     :provenance/failure-mode :scenario-assumption-reported-as-observed-parameter
+                     :provenance/fail-closed-action :output-relabeled-scenario-pending-data
+                     :provenance/prior-claim (or (when (contains? measured-tags explicit-tag) explicit-tag)
+                                                 (when (:observed? entry) :observed)
+                                                 :measured)
+                     :provenance/reasons reasons))))
+
+      (contains? valid-output-tags claimed-tag)
+      (assoc entry
+             :provenance/tag claimed-tag
+             :provenance/status :verified
+             :provenance/relabeled? false
+             :provenance/rule rule-id)
+
+      :else
+      (-> (relabel-measured-keys entry)
+          (assoc :provenance/status :relabeled-fail-closed
+                 :provenance/relabeled? true
+                 :provenance/rule rule-id
+                 :provenance/failure-mode :invalid-provenance-tag
+                 :provenance/fail-closed-action :output-relabeled-scenario-pending-data
+                 :provenance/prior-claim claimed-tag
+                 :provenance/reasons [:invalid-provenance-tag])))))
+
+(defn validate-output-provenance!
+  "Strict fail-closed validator for a single output or parameter map.
+   Returns the verified output if valid; throws `ex-info` if a coefficient-free
+   or scenario assumption is presented as `:measured`/`:observed`, or if the
+   provenance tag is missing/invalid."
+  [output]
+  (let [enforced (enforce-output-provenance output)]
+    (if (:provenance/relabeled? enforced)
+      (throw (ex-info (str "AWAI-2838 fail-closed provenance violation ("
+                           (name (:provenance/failure-mode enforced))
+                           "): output relabeled to :scenario-pending-data")
+                      {:error/code (:provenance/failure-mode enforced)
+                       :rule rule-id
+                       :fail-closed-action :output-relabeled-scenario-pending-data
+                       :fail-closed-tag pending-data-tag
+                       :prior-claim (:provenance/prior-claim enforced)
+                       :reasons (:provenance/reasons enforced)
+                       :relabeled-output enforced}))
+      enforced)))
+
+(defn assert-measured-vs-scenario-tag-per-output
+  "Verify `assert-measured-vs-scenario-tag-per-output` across a collection or
+   map `{output-id output-map}` of outputs.
+
+   Every output is verified independently so one measured output can never mask
+   a mislabeled scenario output. Returns a structured report containing:
+   - `:ok?`           true iff every output carried a valid, honest per-output tag
+   - `:measured-ids`  IDs verified as `:measured` / `:observed`
+   - `:scenario-ids`  IDs verified as explicit scenario tags
+   - `:relabeled-ids` IDs that violated the rule and were relabeled fail-closed
+   - `:violations`    per-output violation details
+   - `:safe-outputs`  same collection/map shape with all violations relabeled
+                      to `:scenario-pending-data`"
+  [outputs]
+  (let [as-map? (map? outputs)
+        entries (if as-map?
+                  (vec outputs)
+                  (vec (map-indexed (fn [idx item]
+                                      [(or (when (map? item) (:id item)) idx) item])
+                                    outputs)))
+        evaluated (mapv (fn [[id item]] [id (enforce-output-provenance item)]) entries)
+        measured-ids (vec (for [[id res] evaluated
+                                :when (and (not (:provenance/relabeled? res))
+                                           (contains? measured-tags (:provenance/tag res)))]
+                            id))
+        scenario-ids (vec (for [[id res] evaluated
+                                :when (and (not (:provenance/relabeled? res))
+                                           (contains? scenario-tags (:provenance/tag res)))]
+                            id))
+        violations (vec (for [[id res] evaluated
+                              :when (:provenance/relabeled? res)]
+                          {:id id
+                           :failure-mode (:provenance/failure-mode res)
+                           :fail-closed-action (:provenance/fail-closed-action res)
+                           :fail-closed-tag (:provenance/tag res)
+                           :prior-claim (:provenance/prior-claim res)
+                           :reasons (:provenance/reasons res)}))
+        safe-outputs (if as-map?
+                       (into {} evaluated)
+                       (mapv second evaluated))]
+    {:ok? (empty? violations)
+     :rule rule-id
+     :verification :assert-measured-vs-scenario-tag-per-output
+     :checked-count (count evaluated)
+     :measured-ids measured-ids
+     :scenario-ids scenario-ids
+     :relabeled-ids (mapv :id violations)
+     :violations violations
+     :safe-outputs safe-outputs}))
+
+(defn assert-measured-vs-scenario-tag-per-output!
+  "Strict variant of `assert-measured-vs-scenario-tag-per-output`: throws
+   `ex-info` when any output violates `coefficient-free-scenario-label`."
+  [outputs]
+  (let [report (assert-measured-vs-scenario-tag-per-output outputs)]
+    (when-not (:ok? report)
+      (throw (ex-info (str "assert-measured-vs-scenario-tag-per-output failed: "
+                           (count (:violations report))
+                           " output(s) relabeled to :scenario-pending-data")
+                      report)))
+    report))
+
+(defn- check-observed-evidence-map [evidence]
+  (if-not (map? evidence)
+    []
+    (vec
+     (mapcat
+      (fn [[k v]]
+        (cond
+          (= k :unmeasured)
+          (if (map? v)
+            (for [[uk uv] v
+                  :when (and (map? uv)
+                             (or (contains? measured-tags (extract-claimed-tag uv))
+                                 (:measured? uv)
+                                 (:observed? uv)))]
+              {:id [:observed-evidence :unmeasured uk]
+               :failure-mode :scenario-assumption-reported-as-observed-parameter
+               :fail-closed-tag pending-data-tag
+               :reasons [:unmeasured-entry-claims-measured]})
+            [])
+
+          (and (map? v)
+               (or (contains? non-measured-statuses (:status v))
+                   (contains? unmeasured-values (:value v))
+                   (= :unmeasured-assumption (:source v))))
+          (if (or (contains? measured-tags (extract-claimed-tag v))
+                  (:measured? v)
+                  (:observed? v))
+            [{:id [:observed-evidence k]
+              :failure-mode :scenario-assumption-reported-as-observed-parameter
+              :fail-closed-tag pending-data-tag
+              :reasons [:unmeasured-entry-claims-measured]}]
+            [])
+
+          :else []))
+      evidence))))
+
+(defn validate-model-edn
+  "Validate a committed model/results/archetype/tier-b EDN map against
+   `AWAI-2838 / coefficient-free-scenario-label` and per-output provenance
+   tagging. Returns `{:ok? boolean :kind keyword :violations [...] :outputs-report ...}`."
+  [edn-map]
+  (cond
+    ;; Scenario input or generated results EDN (:model/id present)
+    (contains? edn-map :model/id)
+    (let [cls (:model/classification edn-map)
+          scenarios (or (:model/scenarios edn-map) (:scenarios edn-map))
+          cls-violations
+          (cond
+            (nil? cls)
+            [{:id (:model/id edn-map)
+              :failure-mode :missing-provenance-tag
+              :fail-closed-tag pending-data-tag
+              :reasons [:missing-model-classification]}]
+
+            (contains? measured-tags cls)
+            [{:id (:model/id edn-map)
+              :failure-mode :scenario-assumption-reported-as-observed-parameter
+              :fail-closed-tag pending-data-tag
+              :prior-claim cls
+              :reasons [:scenario-model-classified-as-measured]}]
+
+            (not (contains? scenario-tags cls))
+            [{:id (:model/id edn-map)
+              :failure-mode :invalid-provenance-tag
+              :fail-closed-tag pending-data-tag
+              :prior-claim cls
+              :reasons [:invalid-model-classification]}]
+
+            :else [])
+          ev-violations (check-observed-evidence-map (:model/observed-evidence edn-map))
+          per-output (when (map? scenarios)
+                       (into {}
+                             (for [[sid sdata] scenarios
+                                   :let [smap (if (map? sdata) sdata {:value sdata})
+                                         inherited (if (or (explicit-tag-without-booleans smap)
+                                                           (:measured? smap)
+                                                           (:observed? smap))
+                                                     smap
+                                                     (cond-> smap
+                                                       (some? cls) (assoc :provenance/tag cls)))]]
+                               [sid (assoc inherited :scenario? true)])))
+          outputs-report (when (seq per-output)
+                           (assert-measured-vs-scenario-tag-per-output per-output))
+          all-violations (vec (concat cls-violations
+                                      ev-violations
+                                      (:violations outputs-report)))]
+      {:ok? (empty? all-violations)
+       :kind :model
+       :id (:model/id edn-map)
+       :rule rule-id
+       :classification cls
+       :outputs-report outputs-report
+       :violations all-violations})
+
+    ;; Archetype EDN (:archetype/id present)
+    (contains? edn-map :archetype/id)
+    (let [cls (:archetype/classification edn-map)
+          measured-entries (into {}
+                                 (for [[k v] (:archetype/measured edn-map)]
+                                   [[:measured k] (assoc v :provenance/tag :measured)]))
+          estimated-entries (into {}
+                                  (for [[k v] (:archetype/estimated edn-map)]
+                                    [[:estimated k]
+                                     (cond-> (assoc v :estimate? true)
+                                       (not (or (explicit-tag-without-booleans v)
+                                                (:measured? v)
+                                                (:observed? v)))
+                                       (assoc :provenance/tag :scenario-assumption))]))
+          outputs-report (assert-measured-vs-scenario-tag-per-output
+                          (merge measured-entries estimated-entries))
+          cls-violations (cond
+                           (nil? cls)
+                           [{:id (:archetype/id edn-map)
+                             :failure-mode :missing-provenance-tag
+                             :fail-closed-tag pending-data-tag
+                             :reasons [:missing-archetype-classification]}]
+                           (and (contains? measured-tags cls)
+                                (seq (:archetype/estimated edn-map)))
+                           [{:id (:archetype/id edn-map)
+                             :failure-mode :scenario-assumption-reported-as-observed-parameter
+                             :fail-closed-tag pending-data-tag
+                             :prior-claim cls
+                             :reasons [:estimated-archetype-classified-as-measured]}]
+                           :else [])
+          all-violations (vec (concat cls-violations (:violations outputs-report)))]
+      {:ok? (empty? all-violations)
+       :kind :archetype
+       :id (:archetype/id edn-map)
+       :rule rule-id
+       :classification cls
+       :outputs-report outputs-report
+       :violations all-violations})
+
+    ;; Tier B models EDN (:tier :b present)
+    (= :b (:tier edn-map))
+    (let [cls (:classification edn-map)
+          cls-violations (cond
+                           (nil? cls)
+                           [{:id (:dataset/id edn-map)
+                             :failure-mode :missing-provenance-tag
+                             :fail-closed-tag pending-data-tag
+                             :reasons [:missing-tier-b-classification]}]
+                           (contains? measured-tags cls)
+                           [{:id (:dataset/id edn-map)
+                             :failure-mode :scenario-assumption-reported-as-observed-parameter
+                             :fail-closed-tag pending-data-tag
+                             :prior-claim cls
+                             :reasons [:tier-b-scenario-classified-as-measured]}]
+                           :else [])
+          model-claims (vec
+                        (for [[iso m] (:models edn-map)
+                              :when (and (map? m)
+                                         (or (contains? measured-tags (extract-claimed-tag m))
+                                             (:measured? m)
+                                             (:observed? m)))]
+                          {:id iso
+                           :failure-mode :scenario-assumption-reported-as-observed-parameter
+                           :fail-closed-tag pending-data-tag
+                           :reasons [:tier-b-country-model-claims-measured]}))
+          all-violations (vec (concat cls-violations model-claims))]
+      {:ok? (empty? all-violations)
+       :kind :tier-b
+       :id (:dataset/id edn-map)
+       :rule rule-id
+       :classification cls
+       :violations all-violations})
+
+    :else
+    {:ok? true
+     :kind :non-model
+     :rule rule-id
+     :violations []}))

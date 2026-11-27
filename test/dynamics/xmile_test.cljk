@@ -325,4 +325,28 @@
     (is (= :unobserved (:status result)))
     (is (empty? (:applied result)))
     (is (= kotoba-network-base-params (:calibrated-params result)))
-    (is (= 5 (count (:assumptions-retained result))))))
+    (is (= 5 (count (:assumptions-retained result))))
+    (is (= :scenario-pending-data (:output-provenance result)))
+    (is (every? #(= :scenario-pending-data %) (vals (:parameter-provenance result))))))
+
+(deftest xmile-coefficient-free-scenario-label-negative-control-test
+  (testing "AWAI-2838 / NEG-2838-04: claiming :measured on a coefficient-free Bass or network model fails closed"
+    (is (thrown-with-msg? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error)
+                          #"cannot be labeled as measured/observed"
+                          (dx/bass-diffusion-model
+                           xmile-ns
+                           {:name "bad-bass" :market-size 1000 :p-coefficient 0.03
+                            :q-coefficient 0.38 :initial-adopters 0 :sim-time 10
+                            :scenario? true :provenance/tag :measured}))))
+  (testing "tag-projection-output relabels coefficient-free projection claiming :observed to :scenario-pending-data"
+    (let [built (dx/bass-diffusion-model xmile-ns {:name "scenario-bass" :market-size 1000
+                                                   :p-coefficient 0.03 :q-coefficient 0.38
+                                                   :initial-adopters 0 :sim-time 10})
+          projected (dx/project execute/run built [5 10])
+          tagged (dx/tag-projection-output {:output projected
+                                            :claimed-tag :observed
+                                            :scenario? true})]
+      (is (= :scenario-pending-data (:provenance/tag tagged)))
+      (is (true? (:provenance/relabeled? tagged)))
+      (is (= :scenario-assumption-reported-as-observed-parameter
+             (:provenance/failure-mode tagged))))))

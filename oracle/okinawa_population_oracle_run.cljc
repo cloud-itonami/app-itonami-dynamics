@@ -61,6 +61,7 @@
 (defn- emit [results]
   (str "#:model{:id :okinawa-population-aging,\n"
        "        :as-of \"2026-11-12\",\n"
+       "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
        "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
        "Natural/social/elder rates are 2024 measured values; the 23.8% elderly-share "

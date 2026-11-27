@@ -100,17 +100,60 @@
 ;; Stock / Flow / Loop -- the entity-level shape
 ;; ---------------------------------------------------------------------------
 
+(def ^:private measured-provenance-tags #{:measured :observed})
+
+(defn- assert-no-misrepresented-measurement!
+  "Fail closed when a stock or flow in a coefficient-free/scenario zone claims
+   `:measured` / `:observed` provenance (AWAI-2838 / NEG-2838-04)."
+  [entity-kind {:keys [as-of source estimate? scenario? assumption?
+                       coefficient-free? unmeasured? measured? observed?]
+                :as m}]
+  (let [claimed (or (:provenance/tag m) (:provenance m)
+                    (when observed? :observed)
+                    (when measured? :measured))
+        claims-measured? (or (contains? measured-provenance-tags claimed)
+                             (boolean measured?)
+                             (boolean observed?))]
+    (when claims-measured?
+      (let [blank-src? (or (not (string? source))
+                           (empty? (.trim source))
+                           (contains? #{"assumption" "assumed" "scenario" "unmeasured"
+                                        "unobserved" "estimate" "estimated" "tbd" "todo"
+                                        "placeholder" "pending" "pending-data"}
+                                      (.toLowerCase (.trim source))))
+            bad-flags (cond-> []
+                        estimate? (conj :flagged-estimate)
+                        scenario? (conj :flagged-scenario)
+                        assumption? (conj :flagged-assumption)
+                        coefficient-free? (conj :flagged-coefficient-free)
+                        unmeasured? (conj :flagged-unmeasured)
+                        blank-src? (conj :missing-empirical-source)
+                        (nil? as-of) (conj :missing-as-of-date))]
+        (when (seq bad-flags)
+          (throw (ex-info (str (name entity-kind)
+                               ": coefficient-free or scenario assumption cannot be tagged as measured/observed")
+                          {:error/code :scenario-assumption-reported-as-observed-parameter
+                           :rule :AWAI-2838/coefficient-free-scenario-label
+                           :fail-closed-action :output-relabeled-scenario-pending-data
+                           :fail-closed-tag :scenario-pending-data
+                           :prior-claim claimed
+                           :reasons bad-flags})))))))
+
 (defn stock
   "A single accumulation. value must be a real, dated, sourced number (or 0) --
    never a placeholder. as-of and source are required so every number in this
    model is independently checkable, the same discipline ADR-2607202700 and
-   ADR-2607202800 established by hand before this library existed."
+   ADR-2607202800 established by hand before this library existed.
+   Fails closed if a scenario/estimated/coefficient-free entry claims `:measured`
+   or `:observed` provenance (AWAI-2838 / NEG-2838-04)."
   [{:keys [id label value unit as-of source] :as m}]
   {:pre [(some? id) (number? value) (some? as-of) (some? source)]}
+  (assert-no-misrepresented-measurement! :stock m)
   (assoc m :dynamics/type :stock))
 
 (defn flow
   [{:keys [id label from to rate-estimate unit] :as m}]
+  (assert-no-misrepresented-measurement! :flow m)
   (assoc m :dynamics/type :flow))
 
 (defn loop*

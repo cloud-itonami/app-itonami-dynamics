@@ -1,6 +1,7 @@
 (ns run-tests
   (:require [cljs.test :as t]
             [dynamics.core-test]
+            [dynamics.provenance-test]
             [dynamics.xmile-test]
             [dynamics.sysml-test]))
 
@@ -8,4 +9,4 @@
   (when-not (t/successful? m)
     (js/process.exit 1)))
 
-(t/run-tests 'dynamics.core-test 'dynamics.xmile-test 'dynamics.sysml-test)
+(t/run-tests 'dynamics.core-test 'dynamics.provenance-test 'dynamics.xmile-test 'dynamics.sysml-test)

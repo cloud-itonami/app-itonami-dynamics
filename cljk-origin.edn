@@ -5,9 +5,11 @@
  :origins
  {"examples/generate_kotoba_network_effect.cljk" ".clj"
   "src/dynamics/core.cljk" ".cljc"
+  "src/dynamics/provenance.cljk" ".cljc"
   "src/dynamics/sysml.cljk" ".cljc"
   "src/dynamics/xmile.cljk" ".cljc"
   "test/dynamics/core_test.cljk" ".cljc"
+  "test/dynamics/provenance_test.cljk" ".cljc"
   "test/dynamics/sysml_test.cljk" ".cljc"
   "test/dynamics/xmile_test.cljk" ".cljc"
   "test/run_tests.cljk" ".cljs"}}

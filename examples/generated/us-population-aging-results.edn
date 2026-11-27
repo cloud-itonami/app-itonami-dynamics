@@ -1,5 +1,6 @@
 #:model{:id :us-population-aging,
         :as-of "2026-11-12",
+        :classification :scenario-not-forecast,
         :interpretation
         "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Birth rate is NCHS-final 2024; death total is secondary-corroborated; net migration and elderly growth are Census Vintage-2024 measured. Year-1 checked against the 2025 estimate (tolerance reflects the 2025 migration drop).",
         :oracle {:script "oracle/us_population_oracle_run.cljc (one-time oracle, not CI/gate)",

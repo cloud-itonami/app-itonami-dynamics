@@ -1,5 +1,6 @@
 #:model{:id :singapore-population-aging,
         :as-of "2026-11-12",
+        :classification :scenario-not-forecast,
         :interpretation
         "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle, units are thousands of people. Birth/death rates are SingStat/MOH-measured 2024 values; net migration is a residual; aging coefficient and elder-mortality multiple are sensitivity assumptions. Year-1 checked against the 2025 estimate.",
         :oracle {:script "oracle/singapore_population_oracle_run.cljc (one-time oracle, not CI/gate)",

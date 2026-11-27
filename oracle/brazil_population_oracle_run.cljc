@@ -116,6 +116,7 @@
 (defn- emit [results]
   (str "#:model{:id :brazil-population-aging,\n"
        "        :as-of \"2026-11-24\",\n"
+       "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
        "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
        "Base year is the measured Censo Demográfico 2022 (Segunda Apuração, 2022-08-01): "

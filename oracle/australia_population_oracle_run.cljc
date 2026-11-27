@@ -67,6 +67,7 @@
 (defn- emit [results]
   (str "#:model{:id :australia-population-aging,\n"
        "        :as-of \"2026-11-12\",\n"
+       "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
        "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
        "Birth/death counts and net migration are ABS-2024 actuals; elderly share is "

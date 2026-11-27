@@ -1,5 +1,6 @@
 #:model{:id :vietnam-population-aging,
         :as-of "2026-11-12",
+        :classification :scenario-not-forecast,
         :interpretation
         "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Birth/death counts are GSO 2024 mid-term census actuals; the elderly level is secondary-compiled; net migration is a residual; aging coefficient and elder-mortality multiple are sensitivity assumptions. Year-1 checked for directional consistency only.",
         :oracle {:script "oracle/thailand_population_oracle_run.cljc (one-time oracle, not CI/gate)",
