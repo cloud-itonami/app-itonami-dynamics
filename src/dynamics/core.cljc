@@ -101,19 +101,45 @@
 ;; ---------------------------------------------------------------------------
 
 (def ^:private measured-provenance-tags #{:measured :observed})
+(def ^:private scenario-provenance-tags
+  #{:scenario :scenario-assumption :scenario-not-forecast :scenario-pending-data :unmeasured})
+(def ^:private valid-provenance-tags
+  #{:measured :observed :scenario :scenario-assumption :scenario-not-forecast :scenario-pending-data})
+(def ^:private provenance-tag-keys
+  [:provenance/tag :provenance :tag :classification :model/classification :archetype/classification])
 
 (defn- assert-no-misrepresented-measurement!
-  "Fail closed when a stock or flow in a coefficient-free/scenario zone claims
-   `:measured` / `:observed` provenance (AWAI-2838 / NEG-2838-04)."
+  "Fail closed when a stock or flow carries bogus, contradictory, or unbacked
+   measured/observed provenance (AWAI-2838 / NEG-2838-04)."
   [entity-kind {:keys [as-of source estimate? scenario? assumption?
                        coefficient-free? unmeasured? measured? observed?]
                 :as m}]
-  (let [claimed (or (:provenance/tag m) (:provenance m)
-                    (when observed? :observed)
-                    (when measured? :measured))
-        claims-measured? (or (contains? measured-provenance-tags claimed)
-                             (boolean measured?)
-                             (boolean observed?))]
+  (let [present-tags (vec (for [k provenance-tag-keys
+                                :when (contains? m k)
+                                :let [v (get m k)]
+                                :when (some? v)]
+                            [k v]))
+        invalid-tags (filterv #(not (contains? valid-provenance-tags (second %))) present-tags)
+        measured-tags-present (filterv #(contains? measured-provenance-tags (second %)) present-tags)
+        scenario-tags-present (filterv #(contains? scenario-provenance-tags (second %)) present-tags)
+        claims-measured? (boolean (or (seq measured-tags-present)
+                                      (true? measured?)
+                                      (true? observed?)))
+        claims-scenario? (boolean (or (seq scenario-tags-present)
+                                      estimate? scenario? assumption?
+                                      coefficient-free? unmeasured?))
+        claimed (or (some-> invalid-tags first second)
+                    (some-> measured-tags-present first second)
+                    (when (true? observed?) :observed)
+                    (when (true? measured?) :measured))]
+    (when (seq invalid-tags)
+      (throw (ex-info (str (name entity-kind) ": invalid provenance tag")
+                      {:error/code :invalid-provenance-tag
+                       :rule :AWAI-2838/coefficient-free-scenario-label
+                       :fail-closed-action :output-relabeled-scenario-pending-data
+                       :fail-closed-tag :scenario-pending-data
+                       :prior-claim claimed
+                       :reasons [:invalid-provenance-tag]})))
     (when claims-measured?
       (let [blank-src? (or (not (string? source))
                            (empty? (.trim source))
@@ -122,6 +148,7 @@
                                         "placeholder" "pending" "pending-data"}
                                       (.toLowerCase (.trim source))))
             bad-flags (cond-> []
+                        claims-scenario? (conj :contradictory-measured-claim)
                         estimate? (conj :flagged-estimate)
                         scenario? (conj :flagged-scenario)
                         assumption? (conj :flagged-assumption)
@@ -137,7 +164,7 @@
                            :fail-closed-action :output-relabeled-scenario-pending-data
                            :fail-closed-tag :scenario-pending-data
                            :prior-claim claimed
-                           :reasons bad-flags})))))))
+                           :reasons (vec (distinct bad-flags))})))))))
 
 (defn stock
   "A single accumulation. value must be a real, dated, sourced number (or 0) --

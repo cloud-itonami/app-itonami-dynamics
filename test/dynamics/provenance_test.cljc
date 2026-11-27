@@ -8,7 +8,7 @@
 
    Note: All political/policy fixtures below are abstract, synthetic, aggregate
    records containing zero personal data (no PII)."
-  (:require [kotoba.test :refer [deftest is testing]]
+  (:require [#?(:clj clojure.test :cljs cljs.test) :refer [deftest is testing]]
             [dynamics.core :as d]
             [dynamics.xmile :as dx]
             [dynamics.provenance :as prov]))
@@ -19,6 +19,16 @@
     nil
     (catch #?(:clj clojure.lang.ExceptionInfo :cljs js/Error) e
       (or (ex-data e) {:message (ex-message e)}))))
+
+(defn- has-any-measured-assertion?
+  "True if ANY accepted tag key, `:status`, or boolean flag still asserts
+   measured/observed provenance on `m`."
+  [m]
+  (boolean
+   (or (some #(contains? prov/measured-tags (get m %)) prov/tag-keys)
+       (contains? prov/measured-tags (:status m))
+       (true? (:measured? m))
+       (true? (:observed? m)))))
 
 (deftest measured-output-with-dated-empirical-provenance-is-verified-test
   (testing "an empirically sourced, dated output preserves its :measured / :observed tag"
@@ -68,6 +78,7 @@
       (is (= :scenario-pending-data (:provenance/tag relabeled)))
       (is (= :relabeled-fail-closed (:provenance/status relabeled)))
       (is (true? (:provenance/relabeled? relabeled)))
+      (is (not (has-any-measured-assertion? relabeled)))
       (is (= :scenario-assumption-reported-as-observed-parameter
              (:provenance/failure-mode relabeled)))
       (is (= :output-relabeled-scenario-pending-data
@@ -86,9 +97,137 @@
           relabeled (prov/enforce-output-provenance bad-flag-entry)]
       (is (= :scenario-pending-data (:provenance/tag relabeled)))
       (is (false? (:measured? relabeled)))
+      (is (not (has-any-measured-assertion? relabeled)))
       (is (true? (:provenance/relabeled? relabeled)))
       (is (= :scenario-assumption-reported-as-observed-parameter
              (:provenance/failure-mode relabeled))))))
+
+(deftest negative-control-contradictory-and-bogus-tags-fail-closed-test
+  (testing "Repro A (Kougi): :provenance/tag :scenario-not-forecast paired with :classification :measured fails closed and strips all measured fields"
+    (let [repro-a {:provenance/tag :scenario-not-forecast
+                   :classification :measured
+                   :coefficient-free? true}
+          relabeled (prov/enforce-output-provenance repro-a)
+          report (prov/assert-measured-vs-scenario-tag-per-output {:repro-a repro-a})
+          strict-err (catch-ex-data #(prov/validate-output-provenance! repro-a))
+          bundle-err (catch-ex-data #(prov/assert-measured-vs-scenario-tag-per-output! {:repro-a repro-a}))]
+      (is (= :scenario-pending-data (:provenance/tag relabeled)))
+      (is (= :scenario-pending-data (:classification relabeled)))
+      (is (not (has-any-measured-assertion? relabeled)))
+      (is (true? (:provenance/relabeled? relabeled)))
+      (is (= :scenario-assumption-reported-as-observed-parameter
+             (:provenance/failure-mode relabeled)))
+      (is (some #{:contradictory-measured-claim} (:provenance/reasons relabeled)))
+      (is (false? (:ok? report)))
+      (is (= [:repro-a] (:relabeled-ids report)))
+      (is (not (has-any-measured-assertion? (get-in report [:safe-outputs :repro-a]))))
+      (is (some? strict-err))
+      (is (some? bundle-err))))
+
+  (testing "Repro A reverse order: :provenance/tag :measured paired with :classification :scenario-not-forecast fails closed even with source/as-of"
+    (let [repro-a-rev {:provenance/tag :measured
+                       :classification :scenario-not-forecast
+                       :source "National Statistical Registry 2024"
+                       :as-of 2024}
+          repro-a-model-cls {:provenance/tag :scenario-assumption
+                             :model/classification :observed
+                             :measured? true
+                             :source "National Statistical Registry 2024"
+                             :as-of 2024}]
+      (doseq [case-map [repro-a-rev repro-a-model-cls]]
+        (let [relabeled (prov/enforce-output-provenance case-map)
+              report (prov/assert-measured-vs-scenario-tag-per-output {:x case-map})
+              strict-err (catch-ex-data #(prov/validate-output-provenance! case-map))]
+          (is (= :scenario-pending-data (:provenance/tag relabeled)))
+          (is (not (has-any-measured-assertion? relabeled)))
+          (is (true? (:provenance/relabeled? relabeled)))
+          (is (false? (:ok? report)))
+          (is (some? strict-err))))))
+
+  (testing "Repro B (Kougi): bogus :provenance/tag :bogus paired with :measured? true fails closed and strips :measured?"
+    (let [repro-b {:provenance/tag :bogus
+                   :measured? true
+                   :source "Synthetic census fixture"
+                   :as-of 2024}
+          relabeled (prov/enforce-output-provenance repro-b)
+          report (prov/assert-measured-vs-scenario-tag-per-output {:repro-b repro-b})
+          strict-err (catch-ex-data #(prov/validate-output-provenance! repro-b))
+          bundle-err (catch-ex-data #(prov/assert-measured-vs-scenario-tag-per-output! {:repro-b repro-b}))]
+      (is (= :scenario-pending-data (:provenance/tag relabeled)))
+      (is (false? (:measured? relabeled)))
+      (is (not (has-any-measured-assertion? relabeled)))
+      (is (true? (:provenance/relabeled? relabeled)))
+      (is (= :invalid-provenance-tag (:provenance/failure-mode relabeled)))
+      (is (= :bogus (:provenance/prior-claim relabeled)))
+      (is (false? (:ok? report)))
+      (is (= [:repro-b] (:relabeled-ids report)))
+      (is (not (has-any-measured-assertion? (get-in report [:safe-outputs :repro-b]))))
+      (is (= :invalid-provenance-tag (:error/code strict-err)))
+      (is (some? bundle-err))))
+
+  (testing "secondary bogus tag alongside a valid primary scenario tag also fails closed"
+    (let [bad-secondary {:provenance/tag :scenario-not-forecast
+                         :classification :bogus}
+          relabeled (prov/enforce-output-provenance bad-secondary)
+          report (prov/assert-measured-vs-scenario-tag-per-output {:bad bad-secondary})]
+      (is (= :scenario-pending-data (:provenance/tag relabeled)))
+      (is (= :scenario-pending-data (:classification relabeled)))
+      (is (true? (:provenance/relabeled? relabeled)))
+      (is (= :invalid-provenance-tag (:provenance/failure-mode relabeled)))
+      (is (false? (:ok? report))))))
+
+(deftest negative-control-empty-parameters-cannot-mask-inputs-test
+  (testing "Repro C (Kougi): empty :parameters [] alongside scenario :inputs fails closed and is rejected in strict mode"
+    (let [repro-c {:provenance/tag :measured
+                   :source "Synthetic census fixture"
+                   :as-of 2024
+                   :parameters []
+                   :inputs [{:provenance/tag :scenario-assumption
+                             :coefficient-free? true}]}
+          relabeled (prov/enforce-output-provenance repro-c)
+          report (prov/assert-measured-vs-scenario-tag-per-output {:repro-c repro-c})
+          strict-err (catch-ex-data #(prov/validate-output-provenance! repro-c))
+          bundle-err (catch-ex-data #(prov/assert-measured-vs-scenario-tag-per-output! {:repro-c repro-c}))]
+      (is (= :scenario-pending-data (:provenance/tag relabeled)))
+      (is (not (has-any-measured-assertion? relabeled)))
+      (is (true? (:provenance/relabeled? relabeled)))
+      (is (= :scenario-assumption-reported-as-observed-parameter
+             (:provenance/failure-mode relabeled)))
+      (is (some #{:contains-unmeasured-or-scenario-parameter} (:provenance/reasons relabeled)))
+      (is (false? (:ok? report)))
+      (is (= [:repro-c] (:relabeled-ids report)))
+      (is (not (has-any-measured-assertion? (get-in report [:safe-outputs :repro-c]))))
+      (is (= :scenario-assumption-reported-as-observed-parameter (:error/code strict-err)))
+      (is (some? bundle-err))))
+
+  (testing "empty map :parameters {} or measured :parameters alongside scenario :inputs also fails closed"
+    (doseq [variant [{:provenance/tag :measured
+                      :source "Official statistical release 2024"
+                      :as-of 2024
+                      :parameters {}
+                      :inputs [{:provenance/tag :scenario-assumption :scenario? true}]}
+                     {:provenance/tag :measured
+                      :source "Official statistical release 2024"
+                      :as-of 2024
+                      :parameters {:p1 {:provenance/tag :measured
+                                        :source "Official statistical release 2024"
+                                        :as-of 2024}}
+                      :inputs [{:provenance/tag :scenario-pending-data :coefficient-free? true}]}
+                     {:provenance/tag :measured
+                      :source "Official statistical release 2024"
+                      :as-of 2024
+                      :inputs [{:provenance/tag :measured
+                                :source "Official statistical release 2024"
+                                :as-of 2024
+                                :parameters []
+                                :inputs [{:provenance/tag :scenario-assumption :scenario? true}]}]}]]
+      (let [relabeled (prov/enforce-output-provenance variant)
+            err (catch-ex-data #(prov/validate-output-provenance! variant))]
+        (is (= :scenario-pending-data (:provenance/tag relabeled)))
+        (is (not (has-any-measured-assertion? relabeled)))
+        (is (true? (:provenance/relabeled? relabeled)))
+        (is (some #{:contains-unmeasured-or-scenario-parameter} (:provenance/reasons relabeled)))
+        (is (some? err))))))
 
 (deftest negative-control-missing-or-placeholder-provenance-fails-closed-test
   (testing "claiming :measured without an empirical :source or :as-of fails closed"
@@ -100,6 +239,7 @@
       (let [relabeled (prov/enforce-output-provenance bad-case)]
         (is (= :scenario-pending-data (:provenance/tag relabeled))
             (str (:id bad-case) " must be relabeled to :scenario-pending-data"))
+        (is (not (has-any-measured-assertion? relabeled)))
         (is (true? (:provenance/relabeled? relabeled)))
         (is (= :scenario-assumption-reported-as-observed-parameter
                (:provenance/failure-mode relabeled))))))
@@ -131,6 +271,7 @@
           relabeled (prov/enforce-output-provenance mixed-output)
           err (catch-ex-data #(prov/validate-output-provenance! mixed-output))]
       (is (= :scenario-pending-data (:provenance/tag relabeled)))
+      (is (not (has-any-measured-assertion? relabeled)))
       (is (true? (:provenance/relabeled? relabeled)))
       (is (some #{:contains-unmeasured-or-scenario-parameter} (:provenance/reasons relabeled)))
       (is (= :scenario-assumption-reported-as-observed-parameter (:error/code err))))))
@@ -189,6 +330,7 @@
              (get-in report [:violations 0 :failure-mode])))
       (is (= :scenario-pending-data
              (get-in report [:safe-outputs :forged-policy-coef :provenance/tag])))
+      (is (not (has-any-measured-assertion? (get-in report [:safe-outputs :forged-policy-coef]))))
       (is (= :measured
              (get-in report [:safe-outputs :turnout-2024 :provenance/tag])))
       (is (= :scenario-not-forecast
@@ -197,7 +339,7 @@
       (is (false? (:ok? err))))))
 
 (deftest core-and-xmile-fail-closed-guards-test
-  (testing "dynamics.core/stock and dynamics.core/flow reject scenario/estimated items claiming :measured"
+  (testing "dynamics.core/stock and dynamics.core/flow reject scenario, contradictory, and bogus provenance tags"
     (let [stock-err (catch-ex-data
                      #(d/stock {:id :synthetic-policy-stock
                                 :value 10.0
@@ -205,6 +347,20 @@
                                 :source "Official report"
                                 :scenario? true
                                 :provenance/tag :measured}))
+          stock-contra-err (catch-ex-data
+                            #(d/stock {:id :contra-stock
+                                       :value 10.0
+                                       :as-of "2026-11-28"
+                                       :source "Official report"
+                                       :provenance/tag :scenario-not-forecast
+                                       :classification :measured}))
+          stock-bogus-err (catch-ex-data
+                           #(d/stock {:id :bogus-stock
+                                      :value 10.0
+                                      :as-of "2026-11-28"
+                                      :source "Official report"
+                                      :provenance/tag :bogus
+                                      :measured? true}))
           flow-err (catch-ex-data
                     #(d/flow {:id :synthetic-policy-flow
                               :from :a :to :b
@@ -213,6 +369,8 @@
                               :provenance/tag :observed}))]
       (is (= :scenario-assumption-reported-as-observed-parameter (:error/code stock-err)))
       (is (= :scenario-pending-data (:fail-closed-tag stock-err)))
+      (is (= :scenario-assumption-reported-as-observed-parameter (:error/code stock-contra-err)))
+      (is (= :invalid-provenance-tag (:error/code stock-bogus-err)))
       (is (= :scenario-assumption-reported-as-observed-parameter (:error/code flow-err)))))
 
   (testing "dynamics.xmile/calibrate-network-effect-params tags retained assumptions as :scenario-pending-data"

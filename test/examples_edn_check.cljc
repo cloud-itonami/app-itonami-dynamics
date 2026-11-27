@@ -11,7 +11,7 @@
 (require '[clojure.edn :as edn] '[clojure.java.io :as io])
 
 (def root (-> *file* io/file .getCanonicalFile .getParentFile .getParentFile))
-(load-file (str (io/file root "src/dynamics/provenance.cljk")))
+(load-file (str (io/file root "src/dynamics/provenance.cljc")))
 (alias 'prov 'dynamics.provenance)
 
 (def files (->> ["examples" "examples/generated"]

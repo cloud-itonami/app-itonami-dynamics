@@ -1,5 +1,5 @@
 (ns dynamics.xmile-test
-  (:require [kotoba.test :refer [deftest is testing]]
+  (:require [#?(:clj clojure.test :cljs cljs.test) :refer [deftest is testing]]
             [dynamics.xmile :as dx]
             [xmile.model :as m]
             [xmile.validate :as validate]

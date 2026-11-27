@@ -9,20 +9,21 @@
 ;;   Fail-closed: output-relabeled-scenario-pending-data
 ;;   Verification: assert-measured-vs-scenario-tag-per-output
 ;;
-;; 1. Loads src/dynamics/provenance.cljk, src/dynamics/core.cljk, src/dynamics/xmile.cljk
+;; 1. Loads src/dynamics/provenance.cljc, src/dynamics/core.cljc, src/dynamics/xmile.cljc
 ;; 2. Validates every committed model/results/archetype/tier-b EDN file in
 ;;    examples/, examples/generated/, and examples/tier-b/
 ;; 3. Executes positive & negative-control checks for per-output measured vs
-;;    scenario provenance tagging and fail-closed relabeling.
+;;    scenario provenance tagging, contradictory tags, bogus tags, and
+;;    empty :parameters [] masking :inputs.
 ;; Exit 0 = every check passed, 1 = one or more checks failed.
 
 (require '[clojure.edn :as edn]
          '[clojure.java.io :as io])
 
 (def root (-> *file* io/file .getCanonicalFile .getParentFile .getParentFile))
-(load-file (str (io/file root "src/dynamics/provenance.cljk")))
-(load-file (str (io/file root "src/dynamics/core.cljk")))
-(load-file (str (io/file root "src/dynamics/xmile.cljk")))
+(load-file (str (io/file root "src/dynamics/provenance.cljc")))
+(load-file (str (io/file root "src/dynamics/core.cljc")))
+(load-file (str (io/file root "src/dynamics/xmile.cljc")))
 
 (alias 'prov 'dynamics.provenance)
 (alias 'd 'dynamics.core)
@@ -39,6 +40,13 @@
     nil
     (catch clojure.lang.ExceptionInfo e
       (or (ex-data e) {:message (.getMessage e)}))))
+
+(defn any-measured-assertion? [m]
+  (boolean
+   (or (some #(contains? prov/measured-tags (get m %)) prov/tag-keys)
+       (contains? prov/measured-tags (:status m))
+       (true? (:measured? m))
+       (true? (:observed? m)))))
 
 ;; ---- 1. Audit all committed EDN artifacts across examples/ ------------------
 (def edn-files
@@ -108,11 +116,70 @@
       err (catch-ex-data #(prov/validate-output-provenance! bad-param))]
   (check! :neg-scenario-as-observed-relabels-fail-closed
           (and (= :scenario-pending-data (:provenance/tag relabeled))
+               (not (any-measured-assertion? relabeled))
                (true? (:provenance/relabeled? relabeled))
                (= :scenario-assumption-reported-as-observed-parameter (:provenance/failure-mode relabeled))
                (= :output-relabeled-scenario-pending-data (:provenance/fail-closed-action relabeled))
                (= :scenario-assumption-reported-as-observed-parameter (:error/code err)))
           "scenario assumption tagged :observed relabels to :scenario-pending-data and throws in strict mode"))
+
+;; ---- 4. Negative controls: Kougi Repro A, B, and C --------------------------
+(let [repro-a {:provenance/tag :scenario-not-forecast
+               :classification :measured
+               :coefficient-free? true}
+      repro-a-rev {:provenance/tag :measured
+                   :classification :scenario-not-forecast
+                   :source "Synthetic census fixture"
+                   :as-of 2024}
+      rel-a (prov/enforce-output-provenance repro-a)
+      rel-a-rev (prov/enforce-output-provenance repro-a-rev)
+      rep-a (prov/assert-measured-vs-scenario-tag-per-output {:a repro-a :a-rev repro-a-rev})
+      err-a (catch-ex-data #(prov/validate-output-provenance! repro-a))
+      err-a-rev (catch-ex-data #(prov/validate-output-provenance! repro-a-rev))]
+  (check! :neg-repro-a-contradictory-tags-fail-closed
+          (and (false? (:ok? rep-a))
+               (= #{:a :a-rev} (set (:relabeled-ids rep-a)))
+               (= :scenario-pending-data (:provenance/tag rel-a) (:classification rel-a))
+               (= :scenario-pending-data (:provenance/tag rel-a-rev) (:classification rel-a-rev))
+               (not (any-measured-assertion? rel-a))
+               (not (any-measured-assertion? rel-a-rev))
+               (some? err-a)
+               (some? err-a-rev))
+          "contradictory scenario+measured tags (both orders) rejected in strict mode and stripped of all measured assertions"))
+
+(let [repro-b {:provenance/tag :bogus
+               :measured? true
+               :source "Synthetic census fixture"
+               :as-of 2024}
+      rel-b (prov/enforce-output-provenance repro-b)
+      rep-b (prov/assert-measured-vs-scenario-tag-per-output {:b repro-b})
+      err-b (catch-ex-data #(prov/validate-output-provenance! repro-b))]
+  (check! :neg-repro-b-bogus-tag-with-measured-flag-fails-closed
+          (and (false? (:ok? rep-b))
+               (= [:b] (:relabeled-ids rep-b))
+               (= :scenario-pending-data (:provenance/tag rel-b))
+               (false? (:measured? rel-b))
+               (not (any-measured-assertion? rel-b))
+               (= :invalid-provenance-tag (:provenance/failure-mode rel-b))
+               (= :invalid-provenance-tag (:error/code err-b)))
+          "bogus :provenance/tag paired with :measured? true rejected in strict mode and stripped of :measured?"))
+
+(let [repro-c {:provenance/tag :measured
+               :source "Synthetic census fixture"
+               :as-of 2024
+               :parameters []
+               :inputs [{:provenance/tag :scenario-assumption :coefficient-free? true}]}
+      rel-c (prov/enforce-output-provenance repro-c)
+      rep-c (prov/assert-measured-vs-scenario-tag-per-output {:c repro-c})
+      err-c (catch-ex-data #(prov/validate-output-provenance! repro-c))]
+  (check! :neg-repro-c-empty-parameters-cannot-mask-inputs
+          (and (false? (:ok? rep-c))
+               (= [:c] (:relabeled-ids rep-c))
+               (= :scenario-pending-data (:provenance/tag rel-c))
+               (not (any-measured-assertion? rel-c))
+               (some #{:contains-unmeasured-or-scenario-parameter} (:provenance/reasons rel-c))
+               (= :scenario-assumption-reported-as-observed-parameter (:error/code err-c)))
+          "empty :parameters [] never masks scenario :inputs; rejected in strict mode and relabeled fail-closed"))
 
 (let [bad-bundle {:turnout-2024
                   {:value 0.642
@@ -150,6 +217,7 @@
       relabeled (prov/enforce-output-provenance mixed-input-output)]
   (check! :neg-mixed-measured-and-assumed-params-relabels-fail-closed
           (and (= :scenario-pending-data (:provenance/tag relabeled))
+               (not (any-measured-assertion? relabeled))
                (true? (:provenance/relabeled? relabeled))
                (some #{:contains-unmeasured-or-scenario-parameter} (:provenance/reasons relabeled)))
           "output mixing measured baseline + assumed coefficient cannot be tagged :measured"))

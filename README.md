@@ -345,7 +345,7 @@ library underneath it: `pow` is reconstructed from the compiler's bounded
 exp/log intrinsics rather than `Math/pow`/`js/Math.pow`, which was the one
 place this library rested on a runtime's numerics.
 
-`src/dynamics/core.cljk` remains the **reference implementation and the load
+`src/dynamics/core.cljc` remains the **reference implementation and the load
 path** -- it is what consumers require, because a `.cljc` is what a JVM and a
 JS runtime can both `require`. When the two disagree about a number, **the
 kernel is right and the `.cljc` is what gets fixed.**
