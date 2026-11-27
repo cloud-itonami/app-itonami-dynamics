@@ -34,4 +34,4 @@ jobs:
           node-version: "20"
       - run: npm install -g nbb
       - working-directory: dynamics
-        run: nbb --classpath "src:test:../org-oasis-open-xmile/src:../org-omg-sysmlv2/src:../dsl-core/src" test/run_tests.cljk
+        run: nbb --classpath "src:test:../org-oasis-open-xmile/src:../org-omg-sysmlv2/src:../dsl-core/src" test/run_tests.cljc

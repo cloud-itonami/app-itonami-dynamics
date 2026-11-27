@@ -28,6 +28,76 @@
   #?(:cljs (js/Math.round x)
      :clj (Math/round (double x))))
 
+(def ^:private measured-provenance-tags #{:measured :observed})
+(def ^:private scenario-provenance-tags
+  #{:scenario :scenario-assumption :scenario-not-forecast :scenario-pending-data :unmeasured})
+(def ^:private valid-provenance-tags
+  #{:measured :observed :scenario :scenario-assumption :scenario-not-forecast :scenario-pending-data})
+(def ^:private provenance-tag-keys
+  [:provenance/tag :provenance :tag :classification :model/classification :archetype/classification])
+
+(defn- valid-empirical-source? [s]
+  (and (string? s)
+       (let [t (.trim s)
+             l (.toLowerCase t)]
+         (and (pos? (count t))
+              (not (contains? #{"assumption" "assumed" "scenario" "unmeasured"
+                                "unobserved" "estimate" "estimated" "tbd" "todo"
+                                "placeholder" "pending" "pending-data"}
+                              l))))))
+
+(defn- assert-valid-xmile-provenance!
+  "Fail closed if a caller attaches bogus, contradictory, or unbacked
+   `:measured` / `:observed` provenance to an XMILE model (NEG-2838-04)."
+  [model-fn params]
+  (let [present-tags (vec (for [k provenance-tag-keys
+                                :when (contains? params k)
+                                :let [v (get params k)]
+                                :when (some? v)]
+                            [k v]))
+        invalid-tags (filterv #(not (contains? valid-provenance-tags (second %))) present-tags)
+        measured-tags-present (filterv #(contains? measured-provenance-tags (second %)) present-tags)
+        scenario-tags-present (filterv #(contains? scenario-provenance-tags (second %)) present-tags)
+        claims-measured? (boolean (or (seq measured-tags-present)
+                                      (true? (:measured? params))
+                                      (true? (:observed? params))))
+        claims-scenario? (boolean (or (seq scenario-tags-present)
+                                      (:scenario? params)
+                                      (:assumption? params)
+                                      (:estimate? params)
+                                      (:coefficient-free? params)
+                                      (:unmeasured? params)))
+        claimed (or (some-> invalid-tags first second)
+                    (some-> measured-tags-present first second)
+                    (when (true? (:observed? params)) :observed)
+                    (when (true? (:measured? params)) :measured))]
+    (when (seq invalid-tags)
+      (throw (ex-info (str model-fn ": invalid provenance tag")
+                      {:error/code :invalid-provenance-tag
+                       :rule :AWAI-2838/coefficient-free-scenario-label
+                       :fail-closed-action :output-relabeled-scenario-pending-data
+                       :fail-closed-tag :scenario-pending-data
+                       :prior-claim claimed
+                       :reasons [:invalid-provenance-tag]})))
+    (when claims-measured?
+      (let [reasons (cond-> []
+                      claims-scenario? (conj :contradictory-measured-claim)
+                      (:scenario? params) (conj :flagged-scenario)
+                      (:assumption? params) (conj :flagged-assumption)
+                      (:estimate? params) (conj :flagged-estimate)
+                      (:coefficient-free? params) (conj :flagged-coefficient-free)
+                      (:unmeasured? params) (conj :flagged-unmeasured)
+                      (not (valid-empirical-source? (:source params))) (conj :missing-empirical-source)
+                      (nil? (:as-of params)) (conj :missing-as-of-date))]
+        (when (seq reasons)
+          (throw (ex-info (str model-fn ": scenario or coefficient-free parameters cannot be labeled as measured/observed")
+                          {:error/code :scenario-assumption-reported-as-observed-parameter
+                           :rule :AWAI-2838/coefficient-free-scenario-label
+                           :fail-closed-action :output-relabeled-scenario-pending-data
+                           :fail-closed-tag :scenario-pending-data
+                           :prior-claim claimed
+                           :reasons (vec (distinct reasons))})))))))
+
 (defn acquisition-model
   "Build a real XMILE model (via the `xmile-model-ns` map of {:model
    :validate :execute}, whose namespaces are xmile.model/xmile.validate/
@@ -54,8 +124,9 @@
    :sim-days           simulation horizon, in the same time unit as inflow-rate
    opts (optional)     :dt (default 1.0), :method (default :rk4)"
   [xmile-model-ns {:keys [name inflow-rate conversion-rate initial-stock sim-days]
-                    :or {}}
+                    :as params}
    & [{:keys [dt method] :or {dt 1.0 method :rk4}}]]
+  (assert-valid-xmile-provenance! "acquisition-model" params)
   (let [{:keys [model sim-specs aux flow stock add-variable]} xmile-model-ns]
     (-> (model name {:xmile/sim-specs (sim-specs 0.0 (double sim-days) {:xmile/dt dt :xmile/method method})})
         (add-variable (aux "Inflow_Rate" (str (double inflow-rate))))
@@ -82,8 +153,9 @@
                     change already computed from 2 real observations
    :sim-years      simulation horizon in years
    opts (optional)  :dt (default 0.1) :method (default :rk4)"
-  [xmile-model-ns {:keys [name initial-stock annual-rate sim-years]}
+  [xmile-model-ns {:keys [name initial-stock annual-rate sim-years] :as params}
    & [{:keys [dt method] :or {dt 0.1 method :rk4}}]]
+  (assert-valid-xmile-provenance! "percentage-rate-model" params)
   (let [{:keys [model sim-specs aux flow stock add-variable]} xmile-model-ns]
     (-> (model name {:xmile/sim-specs (sim-specs 0.0 (double sim-years) {:xmile/dt dt :xmile/method method})})
         (add-variable (aux "Annual_Rate" (str (double annual-rate))))
@@ -135,8 +207,10 @@
    :initial-adopters  real number, the stock's real starting value
    :sim-time       simulation horizon, in the caller's chosen time unit
    opts (optional)  :dt (default 1.0) :method (default :rk4)"
-  [xmile-model-ns {:keys [name market-size p-coefficient q-coefficient initial-adopters sim-time]}
+  [xmile-model-ns {:keys [name market-size p-coefficient q-coefficient initial-adopters sim-time]
+                    :as params}
    & [{:keys [dt method] :or {dt 1.0 method :rk4}}]]
+  (assert-valid-xmile-provenance! "bass-diffusion-model" params)
   (let [{:keys [model sim-specs aux flow stock add-variable]} xmile-model-ns]
     (-> (model name {:xmile/sim-specs (sim-specs 0.0 (double sim-time) {:xmile/dt dt :xmile/method method})})
         (add-variable (aux "Market_Size" (str (double market-size))))
@@ -216,6 +290,7 @@
 
    Time unit is years. opts: :dt (default 0.05), :method (default :rk4)."
   [xmile-model-ns params & [{:keys [dt method] :or {dt 0.05 method :rk4}}]]
+  (assert-valid-xmile-provenance! "network-effect-barrier-model" params)
   (require-network-effect-params! params)
   (let [{:keys [model sim-specs aux flow stock add-variable]} xmile-model-ns
         p params
@@ -530,7 +605,12 @@
         candidate-keys [:developer-network-coefficient :stack-network-coefficient
                         :node-demand-coefficient :entrant-replication-throughput
                         :entrant-cost-per-unit]
-        retained (vec (remove #(contains? applied %) candidate-keys))]
+        retained (vec (remove #(contains? applied %) candidate-keys))
+        parameter-provenance (into {}
+                                   (for [k candidate-keys]
+                                     [k (if (contains? applied k)
+                                          :measured
+                                          :scenario-pending-data)]))]
     {:status (cond
                (empty? applied) :unobserved
                (empty? retained) :calibrated
@@ -538,7 +618,119 @@
      :calibrated-params (merge params applied)
      :applied applied
      :assumptions-retained retained
+     :parameter-provenance parameter-provenance
+     :output-provenance (if (seq retained) :scenario-pending-data :scenario)
      :calibrations calibrations}))
+
+(defn- scrub-measured-provenance-keys [m]
+  (let [m1 (reduce (fn [acc k]
+                     (if (contains? acc k) (assoc acc k :scenario-pending-data) acc))
+                   (assoc m :provenance/tag :scenario-pending-data)
+                   provenance-tag-keys)
+        m2 (reduce (fn [acc k]
+                     (if (contains? acc k) (assoc acc k false) acc))
+                   m1
+                   [:measured? :observed?])]
+    (if (contains? measured-provenance-tags (:status m2))
+      (assoc m2 :status :scenario-pending-data)
+      m2)))
+
+(defn tag-projection-output
+  "Attach a fail-closed per-output provenance tag to a simulation projection
+   (`project` or `network-effect-summary` output) per AWAI-2838 / NEG-2838-04.
+
+   Accepts `{:output ... :claimed-tag ... :source ... :as-of ... :scenario? ...
+   :assumption? ... :coefficient-free? ... :assumptions-retained ...}`.
+   Inspects both `claimed-tag` and any pre-existing provenance keys on `output`.
+   Rejects bogus or contradictory tags and relabels fail-closed to
+   `:scenario-pending-data`, stripping all measured/observed assertions."
+  [{:keys [output claimed-tag source as-of scenario? assumption? estimate?
+           coefficient-free? unmeasured? assumptions-retained]}]
+  (let [base (if (map? output) output {:value output})
+        base-tags (vec (for [k provenance-tag-keys
+                             :when (contains? base k)
+                             :let [v (get base k)]
+                             :when (some? v)]
+                         [k v]))
+        all-tag-vals (cond-> (mapv second base-tags)
+                       (some? claimed-tag) (conj claimed-tag))
+        invalid-vals (filterv #(not (contains? valid-provenance-tags %)) all-tag-vals)
+        has-measured? (boolean (or (some #(contains? measured-provenance-tags %) all-tag-vals)
+                                   (true? (:measured? base))
+                                   (true? (:observed? base))
+                                   (contains? measured-provenance-tags (:status base))))
+        has-scenario? (boolean (or (some #(contains? scenario-provenance-tags %) all-tag-vals)
+                                   scenario? assumption? estimate?
+                                   coefficient-free? unmeasured?
+                                   (seq assumptions-retained)))
+        contradictory? (and has-measured? has-scenario?)
+        reasons (vec (distinct
+                      (cond-> []
+                        contradictory? (conj :contradictory-measured-claim)
+                        scenario? (conj :flagged-scenario)
+                        assumption? (conj :flagged-assumption)
+                        estimate? (conj :flagged-estimate)
+                        coefficient-free? (conj :flagged-coefficient-free)
+                        unmeasured? (conj :flagged-unmeasured)
+                        (seq assumptions-retained) (conj :retained-assumptions)
+                        (not (valid-empirical-source? source)) (conj :missing-empirical-source)
+                        (nil? as-of) (conj :missing-as-of-date))))]
+    (cond
+      (and (nil? claimed-tag) (empty? base-tags) (not has-measured?))
+      (assoc (scrub-measured-provenance-keys base)
+             :provenance/status :relabeled-fail-closed
+             :provenance/relabeled? true
+             :provenance/rule :AWAI-2838/coefficient-free-scenario-label
+             :provenance/failure-mode :missing-provenance-tag
+             :provenance/fail-closed-action :output-relabeled-scenario-pending-data
+             :provenance/reasons (vec (distinct (conj reasons :missing-provenance-tag))))
+
+      (seq invalid-vals)
+      (assoc (scrub-measured-provenance-keys base)
+             :provenance/status :relabeled-fail-closed
+             :provenance/relabeled? true
+             :provenance/rule :AWAI-2838/coefficient-free-scenario-label
+             :provenance/failure-mode :invalid-provenance-tag
+             :provenance/fail-closed-action :output-relabeled-scenario-pending-data
+             :provenance/prior-claim (first invalid-vals)
+             :provenance/reasons [:invalid-provenance-tag])
+
+      contradictory?
+      (assoc (scrub-measured-provenance-keys base)
+             :provenance/status :relabeled-fail-closed
+             :provenance/relabeled? true
+             :provenance/rule :AWAI-2838/coefficient-free-scenario-label
+             :provenance/failure-mode :scenario-assumption-reported-as-observed-parameter
+             :provenance/fail-closed-action :output-relabeled-scenario-pending-data
+             :provenance/prior-claim (or (first (filter measured-provenance-tags all-tag-vals))
+                                         :measured)
+             :provenance/reasons reasons)
+
+      (and has-measured? (seq reasons))
+      (assoc (scrub-measured-provenance-keys base)
+             :provenance/status :relabeled-fail-closed
+             :provenance/relabeled? true
+             :provenance/rule :AWAI-2838/coefficient-free-scenario-label
+             :provenance/failure-mode :scenario-assumption-reported-as-observed-parameter
+             :provenance/fail-closed-action :output-relabeled-scenario-pending-data
+             :provenance/prior-claim (or claimed-tag (first (filter measured-provenance-tags all-tag-vals)))
+             :provenance/reasons reasons)
+
+      has-measured?
+      (assoc base
+             :provenance/tag (or claimed-tag (first (filter measured-provenance-tags all-tag-vals)))
+             :provenance/status :verified
+             :provenance/relabeled? false
+             :provenance/rule :AWAI-2838/coefficient-free-scenario-label
+             :source source
+             :as-of as-of)
+
+      :else
+      (assoc base
+             :provenance/tag (or claimed-tag (first all-tag-vals))
+             :provenance/status :verified
+             :provenance/relabeled? false
+             :provenance/rule :AWAI-2838/coefficient-free-scenario-label))))
 
 (defn crossing-year
   "First simulated time at which the stock's series crosses `threshold` in

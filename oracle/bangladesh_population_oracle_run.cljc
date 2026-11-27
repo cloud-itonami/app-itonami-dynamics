@@ -130,6 +130,7 @@
 (defn- emit [results]
   (str "#:model{:id :bangladesh-population-aging,\n"
        "        :as-of \"2026-11-24\",\n"
+       "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
        "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
        "Base year is the enumerated Population and Housing Census 2022 (census night 2022-06-15): "

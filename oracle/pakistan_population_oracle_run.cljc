@@ -128,6 +128,7 @@
 (defn- emit [results]
   (str "#:model{:id :pakistan-population-aging,\n"
        "        :as-of \"2026-11-24\",\n"
+       "        :classification :scenario-not-forecast,\n"
        "        :interpretation\n"
        "        \"2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. "
        "Base year is the PBS 7th Census 2023 detailed population (Table 5): 240,458,089 persons, "

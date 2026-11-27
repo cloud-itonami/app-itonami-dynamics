@@ -1,5 +1,6 @@
 #:model{:id :france-population-aging,
         :as-of "2026-11-12",
+        :classification :scenario-not-forecast,
         :interpretation
         "2-stock Euler integration (dt 0.05yr x 10yr), dependency-free one-time oracle. Birth/death counts are INSEE-2024 actuals; total is the Jan-2026 estimate; elderly share is secondary-compiled; net migration is a residual; aging coefficient and elder-mortality multiple are sensitivity assumptions.",
         :oracle {:script "oracle/france_population_oracle_run.cljc (one-time oracle, not CI/gate)",
